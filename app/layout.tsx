@@ -11,6 +11,28 @@ const plusJakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: "Ga Cemas Lagi!",
   description: "Sistem Pakar Diagnosa Gangguan Kecemasan | Forward Chaining",
+  openGraph: {
+    title: "Ga Cemas Lagi!",
+    description: "Sistem Pakar Diagnosa Gangguan Kecemasan | Forward Chaining",
+    url: "https://gacemaslagi.vercel.app",
+    siteName: "Ga Cemas Lagi",
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "Ga Cemas Lagi Preview",
+      },
+    ],
+    locale: "id_ID",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Ga Cemas Lagi!",
+    description: "Sistem Pakar Diagnosa Gangguan Kecemasan | Forward Chaining",
+    images: ["/og.png"],
+  },
 }
 
 export default function RootLayout({
