@@ -1,0 +1,120 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import Logo from "./svg/Logo"
+import Link from "next/link"
+
+const Header = () => {
+  const [hasScrolled, setHasScrolled] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY
+      setHasScrolled(scrollTop > 0)
+    }
+
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen)
+  }
+
+  return (
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        hasScrolled || isMobileMenuOpen ? "bg-white shadow-md" : "bg-transparent"
+      }`}
+    >
+      <div className={`mx-auto px-8 min-[572px]:px-20 transition-all duration-300 ${
+        hasScrolled || isMobileMenuOpen ? "mt-0" : "mt-4 min-[572px]:mt-10"
+      }`}>
+        <div className="flex items-center justify-between h-20">
+          {/* Logo */}
+          <Link href="/" className="flex-shrink-0 -ml-2 min-[572px]:-ml-5">
+            <Logo className="size-52" fill={hasScrolled || isMobileMenuOpen ? "black" : "white"}  />
+          </Link>
+
+          {/* Navigation */}
+          <nav className="hidden md:flex items-center space-x-8 -ml-14">
+            {["Service", "Histories", "Resources", "About"].map((item) => (
+              <Link
+                key={item}
+                href={`/${item.toLowerCase()}`}
+                className={`tracking-wider font-medium transition-colors ${
+                  hasScrolled
+                    ? "text-gray-800 hover:text-gray-600"
+                    : "text-white hover:text-gray-200"
+                }`}
+              >
+                {item}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Sign In Button */}
+          <button
+            className={`hidden md:block px-6 py-2 rounded-full border transition-colors ${
+              hasScrolled
+                ? "border-gray-800 text-gray-800 hover:bg-gray-800 hover:text-white"
+                : "border-white text-white hover:bg-white hover:text-gray-800"
+            }`}
+          >
+            Sign In
+          </button>
+
+          {/* Mobile Menu Button */}
+          <button 
+            className="md:hidden p-2"
+            onClick={toggleMobileMenu}
+            aria-label="Toggle mobile menu"
+          >
+            <svg
+              className={`w-6 h-6 ${
+                hasScrolled || isMobileMenuOpen ? "text-gray-800" : "text-white"
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d={isMobileMenuOpen 
+                  ? "M6 18L18 6M6 6l12 12" 
+                  : "M4 6h16M4 12h16M4 18h16"
+                }
+              />
+            </svg>
+          </button>
+
+          {/* Mobile Menu Overlay */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden fixed inset-0 top-20 bg-white z-40">
+              <nav className="flex flex-col p-4">
+                {["Service", "Histories", "Resources", "About"].map((item) => (
+                  <Link
+                    key={item}
+                    href={`/${item.toLowerCase()}`}
+                    className="text-gray-800 hover:text-gray-600 py-3 text-lg font-medium border-b border-gray-100"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {item}
+                  </Link>
+                ))}
+                <button className="mt-4 w-full px-6 py-2 rounded-full border border-gray-800 text-gray-800 hover:bg-gray-800 hover:text-white transition-colors">
+                  Sign In
+                </button>
+              </nav>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  )
+}
+
+export default Header
