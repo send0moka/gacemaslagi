@@ -87,7 +87,7 @@ const Header = () => {
           >
             <svg
               className={`w-6 h-6 ${
-              hasScrolled || isMobileMenuOpen || window.innerWidth < 768
+              hasScrolled || isMobileMenuOpen || isMobile
                 ? "text-gray-800"
                 : "text-white"
               }`}
