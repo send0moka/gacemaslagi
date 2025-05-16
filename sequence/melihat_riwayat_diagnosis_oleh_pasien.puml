@@ -1,0 +1,22 @@
+@startuml
+skinparam monochrome true
+
+actor Pasien
+participant "View (Next.js Page)" as View
+participant "Controller (Server Action)" as Controller
+participant "Clerk" as Clerk
+participant "Model (Supabase Interaction)" as Model
+participant "Supabase" as Supabase
+
+Pasien -> View: Request Diagnosis History
+View -> Controller: Fetch History
+Controller -> Clerk: Check Authentication
+Clerk -> Controller: Auth Verified
+Controller -> Model: Retrieve History
+Model -> Supabase: Query Diagnosis History
+Supabase -> Model: Return History Data
+Model -> Controller: Send History Data
+Controller -> View: Render History
+View -> Pasien: Display Diagnosis History
+
+@enduml

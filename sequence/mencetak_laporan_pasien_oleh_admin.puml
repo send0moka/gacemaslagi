@@ -1,0 +1,22 @@
+@startuml
+skinparam monochrome true
+
+actor Admin
+participant "View (Next.js Page)" as View
+participant "Controller (Server Action)" as Controller
+participant "Clerk" as Clerk
+participant "Model (Supabase Interaction)" as Model
+participant "Supabase" as Supabase
+
+Admin -> View: Request to Print Report
+View -> Controller: Fetch Report Data
+Controller -> Clerk: Check Authentication
+Clerk -> Controller: Auth Verified
+Controller -> Model: Retrieve Diagnosis Data
+Model -> Supabase: Query Diagnosis Data
+Supabase -> Model: Return Data
+Model -> Controller: Send Report Data
+Controller -> View: Generate Report
+View -> Admin: Display/Export Report
+
+@enduml

@@ -7,6 +7,14 @@ import Link from "next/link"
 const Header = () => {
   const [hasScrolled, setHasScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768)
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,16 +33,22 @@ const Header = () => {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        hasScrolled || isMobileMenuOpen ? "bg-white shadow-md" : "bg-transparent"
+        hasScrolled || isMobileMenuOpen
+          ? "bg-white shadow-md mt-0"
+          : "bg-transparent mt-10"
       }`}
     >
-      <div className={`mx-auto px-8 min-[572px]:px-20 transition-all duration-300 ${
-        hasScrolled || isMobileMenuOpen ? "mt-0" : "mt-4 min-[572px]:mt-10"
-      }`}>
+      <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
-          {/* Logo */}
-          <Link href="/" className="flex-shrink-0 -ml-2 min-[572px]:-ml-5">
-            <Logo className="size-52" fill={hasScrolled || isMobileMenuOpen ? "black" : "white"}  />
+          <Link href="/">
+            <Logo
+              className="w-52 h-52"
+              fill={
+                hasScrolled || isMobileMenuOpen || isMobile
+                  ? "black"
+                  : "white"
+              }
+            />
           </Link>
 
           {/* Navigation */}
@@ -66,27 +80,30 @@ const Header = () => {
           </button>
 
           {/* Mobile Menu Button */}
-          <button 
+          <button
             className="md:hidden p-2"
             onClick={toggleMobileMenu}
             aria-label="Toggle mobile menu"
           >
             <svg
               className={`w-6 h-6 ${
-                hasScrolled || isMobileMenuOpen ? "text-gray-800" : "text-white"
+              hasScrolled || isMobileMenuOpen || window.innerWidth < 768
+                ? "text-gray-800"
+                : "text-white"
               }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
               <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d={isMobileMenuOpen 
-                  ? "M6 18L18 6M6 6l12 12" 
-                  : "M4 6h16M4 12h16M4 18h16"
-                }
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d={
+                isMobileMenuOpen
+                ? "M6 18L18 6M6 6l12 12"
+                : "M4 6h16M4 12h16M4 18h16"
+              }
               />
             </svg>
           </button>

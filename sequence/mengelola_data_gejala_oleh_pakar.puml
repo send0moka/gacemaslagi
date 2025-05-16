@@ -1,0 +1,22 @@
+@startuml
+skinparam monochrome true
+
+actor Pakar
+participant "View (Next.js Page)" as View
+participant "Controller (Server Action)" as Controller
+participant "Clerk" as Clerk
+participant "Model (Supabase Interaction)" as Model
+participant "Supabase" as Supabase
+
+Pakar -> View: Request to Manage Gejala
+View -> Controller: Send Gejala Data
+Controller -> Clerk: Check Authentication
+Clerk -> Controller: Auth Verified
+Controller -> Model: Save/Update Gejala
+Model -> Supabase: Insert/Update Gejala
+Supabase -> Model: Confirm Save/Update
+Model -> Controller: Gejala Saved
+Controller -> View: Update UI
+View -> Pakar: Display Success Message
+
+@enduml

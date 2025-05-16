@@ -1,0 +1,22 @@
+@startuml
+skinparam monochrome true
+
+actor User
+participant "View (Next.js Page)" as View
+participant "Controller (Server Action)" as Controller
+participant "Clerk" as Clerk
+participant "Model (Supabase Interaction)" as Model
+participant "Supabase" as Supabase
+
+User -> View: Request Login
+View -> Controller: Send Login Credentials
+Controller -> Clerk: Verify Credentials
+Clerk -> Controller: Return Authentication Token
+Controller -> Model: Save Session Data
+Model -> Supabase: Store Session
+Supabase -> Model: Confirm Storage
+Model -> Controller: Session Saved
+Controller -> View: Redirect to Dashboard
+View -> User: Display Dashboard
+
+@enduml

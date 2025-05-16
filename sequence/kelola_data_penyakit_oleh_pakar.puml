@@ -1,0 +1,22 @@
+@startuml
+skinparam monochrome true
+
+actor Pakar
+participant "View (Next.js Page)" as View
+participant "Controller (Server Action)" as Controller
+participant "Clerk" as Clerk
+participant "Model (Supabase Interaction)" as Model
+participant "Supabase" as Supabase
+
+Pakar -> View: Request to Manage Penyakit
+View -> Controller: Send Penyakit Data
+Controller -> Clerk: Check Authentication
+Clerk -> Controller: Auth Verified
+Controller -> Model: Save/Update Penyakit
+Model -> Supabase: Insert/Update Penyakit
+Supabase -> Model: Confirm Save/Update
+Model -> Controller: Penyakit Saved
+Controller -> View: Update UI
+View -> Pakar: Display Success Message
+
+@enduml
