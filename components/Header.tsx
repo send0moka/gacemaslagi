@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs"
 import Logo from "./svg/Logo"
 import Link from "next/link"
 
@@ -12,8 +13,8 @@ const Header = () => {
   useEffect(() => {
     setIsMobile(window.innerWidth < 768)
     const handleResize = () => setIsMobile(window.innerWidth < 768)
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
   }, [])
 
   useEffect(() => {
@@ -44,9 +45,7 @@ const Header = () => {
             <Logo
               className="w-52 h-52"
               fill={
-                hasScrolled || isMobileMenuOpen || isMobile
-                  ? "black"
-                  : "white"
+                hasScrolled || isMobileMenuOpen || isMobile ? "black" : "white"
               }
             />
           </Link>
@@ -68,16 +67,38 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* Sign In Button */}
-          <button
-            className={`hidden md:block px-6 py-2 rounded-full border transition-colors ${
-              hasScrolled
-                ? "border-gray-800 text-gray-800 hover:bg-gray-800 hover:text-white"
-                : "border-white text-white hover:bg-white hover:text-gray-800"
-            }`}
-          >
-            Sign In
-          </button>
+          {/* Authentication Buttons */}
+          <div className="hidden md:block">
+            <SignedOut>
+              <SignInButton mode="modal">
+                <button
+                  className={`px-6 py-2 rounded-full border transition-colors ${
+                    hasScrolled
+                      ? "border-gray-800 text-gray-800 hover:bg-gray-800 hover:text-white"
+                      : "border-white text-white hover:bg-white hover:text-gray-800"
+                  }`}
+                >
+                  Sign In
+                </button>
+              </SignInButton>
+            </SignedOut>
+            <SignedIn>
+              <UserButton
+                afterSignOutUrl="/"
+                appearance={{
+                  elements: {
+                    avatarBox: "!size-12", // Force larger size with !important
+                    userButtonTrigger: "!size-12", // Match avatar size
+                    userButtonPopoverCard: "!min-w-[280px]", // Wider dropdown
+                    userButtonPopoverFooter: "!p-4", // More padding in dropdown
+                  },
+                  variables: {
+                    colorPrimary: "#000000", // Customize color if needed
+                  },
+                }}
+              />
+            </SignedIn>
+          </div>
 
           {/* Mobile Menu Button */}
           <button
@@ -87,23 +108,23 @@ const Header = () => {
           >
             <svg
               className={`w-6 h-6 ${
-              hasScrolled || isMobileMenuOpen || isMobile
-                ? "text-gray-800"
-                : "text-white"
+                hasScrolled || isMobileMenuOpen || isMobile
+                  ? "text-gray-800"
+                  : "text-white"
               }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
               <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d={
-                isMobileMenuOpen
-                ? "M6 18L18 6M6 6l12 12"
-                : "M4 6h16M4 12h16M4 18h16"
-              }
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d={
+                  isMobileMenuOpen
+                    ? "M6 18L18 6M6 6l12 12"
+                    : "M4 6h16M4 12h16M4 18h16"
+                }
               />
             </svg>
           </button>
@@ -122,9 +143,31 @@ const Header = () => {
                     {item}
                   </Link>
                 ))}
-                <button className="mt-4 w-full px-6 py-2 rounded-full border border-gray-800 text-gray-800 hover:bg-gray-800 hover:text-white transition-colors">
-                  Sign In
-                </button>
+                <SignedOut>
+                  <SignInButton mode="modal">
+                    <button className="mt-4 w-full px-6 py-2 rounded-full border border-gray-800 text-gray-800 hover:bg-gray-800 hover:text-white transition-colors">
+                      Sign In
+                    </button>
+                  </SignInButton>
+                </SignedOut>
+                <SignedIn>
+                  <div className="mt-4 flex justify-center">
+                    <UserButton
+                      afterSignOutUrl="/"
+                      appearance={{
+                        elements: {
+                          avatarBox: "!size-16", // Larger size for mobile
+                          userButtonTrigger: "!size-16", // Match avatar size
+                          userButtonPopoverCard: "!min-w-[280px]",
+                          userButtonPopoverFooter: "!p-4",
+                        },
+                        variables: {
+                          colorPrimary: "#000000",
+                        },
+                      }}
+                    />
+                  </div>
+                </SignedIn>
               </nav>
             </div>
           )}

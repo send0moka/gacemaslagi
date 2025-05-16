@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { Plus_Jakarta_Sans } from "next/font/google"
+import { ClerkProvider } from "@clerk/nextjs"
 import "./globals.css"
 import Header from "@/components/Header"
 
@@ -41,11 +42,13 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={plusJakarta.variable}>
-      <body className="font-sans antialiased bg-background text-foreground">
-        <Header />
-        {children}
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" className={plusJakarta.variable}>
+        <body className="font-sans antialiased bg-background text-foreground">
+          <Header />
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }
