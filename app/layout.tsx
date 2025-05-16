@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Ga Cemas Lagi!",
     description: "Sistem Pakar Diagnosa Gangguan Kecemasan | Forward Chaining",
-    url: "https://gacemaslagi.vercel.app",
+    url: "https://gacemaslagi.site",
     siteName: "Ga Cemas Lagi",
     images: [
       {
