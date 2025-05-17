@@ -1,9 +1,28 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { auth, currentUser } from "@clerk/nextjs/server"
+import { redirect } from "next/navigation"
 import Hero from "@/components/home/Hero"
+import PublicLayout from "@/components/PublicLayout"
 
-export default function Home() {
+const SUPER_ADMIN_EMAIL = "jehian.zuhry@mhs.unsoed.ac.id"
+
+export default async function Home() {
+  const [session, user] = await Promise.all([
+    auth(),
+    currentUser()
+  ])
+
+  // Only redirect if accessing /admin directly
+  const userEmail = user?.emailAddresses[0]?.emailAddress
+  const isAdminRoute = false // We're in home page, so this is false
+  
+  if (isAdminRoute && userEmail === SUPER_ADMIN_EMAIL) {
+    redirect("/admin")
+  }
+
   return (
-    <>
-    <Hero />
-    </>
+    <PublicLayout>
+      <Hero />
+    </PublicLayout>
   )
 }
