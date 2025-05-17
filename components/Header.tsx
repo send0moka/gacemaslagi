@@ -156,8 +156,8 @@ const Header = () => {
                       afterSignOutUrl="/"
                       appearance={{
                         elements: {
-                          avatarBox: "!size-16", // Larger size for mobile
-                          userButtonTrigger: "!size-16", // Match avatar size
+                          avatarBox: "!size-16",
+                          userButtonTrigger: "!size-16",
                           userButtonPopoverCard: "!min-w-[280px]",
                           userButtonPopoverFooter: "!p-4",
                         },
