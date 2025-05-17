@@ -4,17 +4,36 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { UserButton } from "@clerk/nextjs"
 
-const AdminSidebar = () => {
+interface AdminSidebarProps {
+  isSuperAdmin: boolean
+  isExpert: boolean
+}
+
+const AdminSidebar = ({ isSuperAdmin, isExpert }: AdminSidebarProps) => {
   const pathname = usePathname()
 
   // Separate home link from admin menu items
   const homeLink = { href: "/", label: "Back to Home", icon: "🏠" }
 
-  const menuItems = [
+  // Base menu items for operators (non-experts)
+  const operatorMenuItems = [
     { href: "/admin", label: "Dashboard", icon: "📊" },
-    { href: "/admin/users", label: "Manage Users", icon: "👥" },
     { href: "/admin/settings", label: "Settings", icon: "⚙️" },
   ]
+
+  // Add disease and symptom management for experts
+  const expertMenuItems = [
+    ...operatorMenuItems,
+    { href: "/admin/symptoms", label: "Manage Symptoms", icon: "🔍" },
+    { href: "/admin/diseases", label: "Manage Diseases", icon: "🏥" },
+  ]
+
+  // Add users management only for super admin
+  const menuItems = isSuperAdmin 
+    ? [{ href: "/admin/users", label: "Manage Users", icon: "👥" }, ...expertMenuItems]
+    : isExpert 
+      ? expertMenuItems 
+      : operatorMenuItems
 
   const userButtonAppearance = {
     elements: {
@@ -48,7 +67,7 @@ const AdminSidebar = () => {
           <span>{homeLink.label}</span>
         </a>
 
-        {/* Admin menu items */}
+        {/* Menu items */}
         <div className="space-y-2">
           {menuItems.map((item) => (
             <Link
