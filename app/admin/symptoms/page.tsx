@@ -7,7 +7,7 @@ import { toast } from "sonner"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { PencilIcon, TrashIcon, SearchIcon, SortAscIcon, SortDescIcon, DownloadIcon, UploadIcon } from "lucide-react"
 import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog"
-import { exportToExcel, exportToPDF, parseCSV } from "@/lib/utils/export"
+import { exportToExcel, exportToPDF, parseCSV } from "@/utils/export"
 
 interface Symptom {
   id: number

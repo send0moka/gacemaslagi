@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/tooltip"
 import { PencilIcon, TrashIcon } from "lucide-react"
 import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog"
-import { exportToPDF } from "@/lib/utils/export"
+import { exportToPDF } from "@/utils/export"
 import { ImageIcon, X } from "lucide-react"
 import Image from "next/image"
 
