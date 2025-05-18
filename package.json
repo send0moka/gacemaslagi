@@ -11,9 +11,6 @@
   "dependencies": {
     "@clerk/backend": "^1.32.2",
     "@clerk/nextjs": "^6.19.4",
-    "@lexical/history": "^0.31.1",
-    "@lexical/react": "^0.31.1",
-    "@lexical/rich-text": "^0.31.1",
     "@radix-ui/react-dialog": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.6",
     "@supabase/ssr": "^0.6.1",
@@ -22,7 +19,6 @@
     "clsx": "^2.1.1",
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
-    "lexical": "^0.31.1",
     "lucide-react": "^0.510.0",
     "next": "15.3.2",
     "next-themes": "^0.4.6",

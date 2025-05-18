@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
@@ -8,7 +7,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { PencilIcon, TrashIcon } from "lucide-react"
 import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog"
 import { exportToPDF } from "@/lib/utils/export"
-import { LexicalEditor } from '@/components/editor/LexicalEditor'
 
 interface LexicalNode {
   children?: {
@@ -34,12 +32,12 @@ interface Solution {
 }
 
 interface Disease {
-  id: number;
-  code: string;
-  name: string;
-  solution: Solution | string;
-  symptoms: number[];
-  created_at: string;
+  id: number
+  code: string
+  name: string
+  solution: string
+  symptoms: number[]
+  created_at: string
 }
 
 interface Symptom {
@@ -48,28 +46,13 @@ interface Symptom {
   name: string
 }
 
-const defaultContent = {
-  root: {
-    children: [{
-      children: [{ text: '', type: 'text' }],
-      type: 'paragraph',
-      direction: null,
-    }],
-    direction: 'ltr',
-    format: '',
-    indent: 0,
-    type: 'root',
-    version: 1,
-  }
-}
-
 export default function DiseasesPage() {
   const [diseases, setDiseases] = useState<Disease[]>([])
   const [symptoms, setSymptoms] = useState<Symptom[]>([])
   const [newDisease, setNewDisease] = useState({
     code: "",
     name: "",
-    solution: JSON.stringify(defaultContent),
+    solution: "",
     symptoms: [] as number[]
   })
   const [editingDisease, setEditingDisease] = useState<Disease | null>(null)
@@ -84,16 +67,7 @@ export default function DiseasesPage() {
   const [filteredDiseases, setFilteredDiseases] = useState<Disease[]>([])
   const supabase = createClient()
 
-  useEffect(() => {
-    fetchDiseases()
-    fetchSymptoms()
-  }, [])
-
-  useEffect(() => {
-    filterAndSortDiseases()
-  }, [diseases, search, sortField, sortOrder])
-
-  const fetchDiseases = async () => {
+  const fetchDiseases = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('diseases')
@@ -109,9 +83,10 @@ export default function DiseasesPage() {
       console.error('Error:', error)
       toast.error('Failed to fetch diseases')
     }
-  }
+  }, [supabase])
 
-  const fetchSymptoms = async () => {
+
+  const fetchSymptoms = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('symptoms')
@@ -126,7 +101,12 @@ export default function DiseasesPage() {
       console.error('Error:', error)
       toast.error('Failed to fetch symptoms')
     }
-  }
+  }, [supabase])
+
+  useEffect(() => {
+    fetchDiseases()
+    fetchSymptoms()
+  }, [fetchDiseases, fetchSymptoms])
 
   const filterAndSortDiseases = useCallback(() => {
     let filtered = [...diseases]
@@ -136,7 +116,7 @@ export default function DiseasesPage() {
       filtered = filtered.filter(
         d => d.code.toLowerCase().includes(search.toLowerCase()) ||
              d.name.toLowerCase().includes(search.toLowerCase()) ||
-             getSolutionText(d.solution).toLowerCase().includes(search.toLowerCase())
+             d.solution.toLowerCase().includes(search.toLowerCase())
       )
     }
 
@@ -152,59 +132,21 @@ export default function DiseasesPage() {
     setFilteredDiseases(filtered)
   }, [diseases, search, sortField, sortOrder])
 
+  useEffect(() => {
+    filterAndSortDiseases()
+  }, [diseases, search, sortField, sortOrder, filterAndSortDiseases])
+
   const handleEdit = (disease: Disease) => {
     setEditingDisease(disease)
     setNewDisease({
       code: disease.code,
       name: disease.name,
-      solution: typeof disease.solution === 'string' 
-        ? disease.solution 
-        : JSON.stringify(disease.solution),
+      solution: disease.solution,
       symptoms: disease.symptoms
     })
   }
 
   const handleAddDisease = async () => {
-    if (!newDisease.code || !newDisease.name || !newDisease.symptoms.length) {
-      toast.error("Please fill all fields and select at least one symptom")
-      return
-    }
-
-    try {
-      const solutionData = JSON.parse(newDisease.solution)
-      if (!solutionData?.root?.children?.[0]?.children?.[0]?.text) {
-        toast.error("Please enter a solution")
-        return
-      }
-
-      setIsLoading(true)
-      const { error: supabaseError } = await supabase
-        .from('diseases')
-        .insert([{
-          ...newDisease,
-          solution: solutionData
-        }])
-
-      if (supabaseError) throw supabaseError
-
-      toast.success("Disease added successfully")
-      setNewDisease({
-        code: "",
-        name: "",
-        solution: JSON.stringify(defaultContent),
-        symptoms: []
-      })
-      fetchDiseases()
-    } catch (err) {
-      console.error('Failed to add disease:', err)
-      toast.error('Failed to add disease')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleUpdate = async () => {
-    if (!editingDisease) return
     if (!newDisease.code || !newDisease.name || !newDisease.solution || newDisease.symptoms.length === 0) {
       toast.error("Please fill all fields and select at least one symptom")
       return
@@ -214,28 +156,57 @@ export default function DiseasesPage() {
     try {
       const { error } = await supabase
         .from('diseases')
+        .insert([newDisease])
+
+      if (error) throw error
+
+      toast.success("Disease added successfully")
+      setNewDisease({ code: "", name: "", solution: "", symptoms: [] })
+      fetchDiseases()
+    } catch (error) {
+      console.error('Failed to add disease:', error)
+      toast.error('Failed to add disease')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleUpdate = async () => {
+    if (!editingDisease) return
+    if (!newDisease.code || !newDisease.name || !newDisease.symptoms.length) {
+      toast.error("Please fill all fields and select at least one symptom")
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      
+      // Handle solution data without forcing JSON parse
+      const solutionData = newDisease.solution
+
+      const { error: supabaseError } = await supabase
+        .from('diseases')
         .update({
           code: newDisease.code,
           name: newDisease.name,
-          solution: newDisease.solution,
+          solution: solutionData,
           symptoms: newDisease.symptoms
         })
         .eq('id', editingDisease.id)
 
-      if (error) {
-        if (error.code === '23505') {
-          toast.error('Disease code already exists')
-          return
-        }
-        throw error
-      }
+      if (supabaseError) throw supabaseError
 
       toast.success("Disease updated successfully")
       setEditingDisease(null)
-      setNewDisease({ code: "", name: "", solution: "", symptoms: [] })
+      setNewDisease({
+        code: "",
+        name: "",
+        solution: "",
+        symptoms: []
+      })
       fetchDiseases()
-    } catch (error) {
-      console.error('Error updating disease:', error)
+    } catch (err) {
+      console.error('Failed to update disease:', err)
       toast.error('Failed to update disease')
     } finally {
       setIsLoading(false)
@@ -284,28 +255,29 @@ export default function DiseasesPage() {
     exportToPDF(formattedData, 'diseases')
   }
 
-  const getSolutionText = (solution: Disease['solution'] | string): string => {
-    try {
-      // Handle string JSON
-      const parsedSolution = typeof solution === 'string' 
-        ? JSON.parse(solution) 
-        : solution;
-
-      // Extract text from the JSON structure
-      return parsedSolution?.root?.children?.[0]?.children?.[0]?.text || ''
-    } catch (error) {
-      console.error('Error parsing solution:', error)
-      return ''
-    }
-  }
-
   const renderSolution = (solution: Solution | string) => {
     try {
-      const parsedSolution = typeof solution === 'string' 
-        ? JSON.parse(solution) as Solution
-        : solution;
+      // First check if it's already a valid JSON string
+      if (typeof solution === 'string') {
+        try {
+          const parsedSolution = JSON.parse(solution) as Solution;
+          return parsedSolution?.root?.children?.map((block, blockIndex) => (
+            <div key={blockIndex}>
+              {block.children?.map((child, childIndex) => (
+                <span key={`${blockIndex}-${childIndex}`}>
+                  {child.text}
+                </span>
+              ))}
+            </div>
+          ));
+        } catch {
+          // If JSON parsing fails, treat it as plain text
+          return <div className="whitespace-pre-line">{solution}</div>;
+        }
+      }
 
-      return parsedSolution?.root?.children?.map((block, blockIndex) => (
+      // Handle case where solution is already parsed
+      return solution?.root?.children?.map((block, blockIndex) => (
         <div key={blockIndex}>
           {block.children?.map((child, childIndex) => (
             <span key={`${blockIndex}-${childIndex}`}>
@@ -315,7 +287,7 @@ export default function DiseasesPage() {
         </div>
       ));
     } catch (error) {
-      console.error('Error parsing solution:', error);
+      console.error('Error rendering solution:', error);
       return <span className="text-red-500">Error displaying solution</span>;
     }
   };
@@ -346,9 +318,12 @@ export default function DiseasesPage() {
           />
           <div>
             <label className="block mb-2">Solution:</label>
-            <LexicalEditor
-              initialValue={newDisease.solution}
-              onChange={(value) => setNewDisease({ ...newDisease, solution: value })}
+            <textarea
+              value={newDisease.solution}
+              onChange={(e) => setNewDisease({ ...newDisease, solution: e.target.value })}
+              placeholder="Enter solution details..."
+              className="w-full px-4 py-2 border rounded-lg min-h-[150px]"
+              rows={6}
             />
           </div>
           <div>
@@ -441,7 +416,7 @@ export default function DiseasesPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {filteredDiseases.map((disease) => (
+            {diseases.map((disease) => (
               <tr key={disease.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Tooltip>
@@ -450,19 +425,15 @@ export default function DiseasesPage() {
                         {disease.code}
                       </span>
                     </TooltipTrigger>
-                    <TooltipContent>
-                      {disease.name}
-                    </TooltipContent>
+                    <TooltipContent>{disease.name}</TooltipContent>
                   </Tooltip>
                 </td>
                 <td className="px-6 py-4">
                   <div className="prose prose-sm max-w-none">
-                    {getSolutionText(disease.solution)}
+                    {renderSolution(disease.name)}
                   </div>
                 </td>
-                <td className="px-6 py-4 prose prose-sm max-w-none">
-                  {renderSolution(disease.solution)}
-                </td>
+                <td className="px-6 py-4 whitespace-pre-line">{disease.solution}</td>
                 <td className="px-6 py-4">
                   <div className="flex flex-wrap gap-1">
                     {symptoms
@@ -503,7 +474,7 @@ export default function DiseasesPage() {
         </table>
       </div>
 
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end my-4">
         <button
           onClick={handleExportPDF}
           className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
