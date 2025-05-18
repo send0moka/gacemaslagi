@@ -1,0 +1,94 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+class Disease {
+  +id: number
+  +code: string
+  +name: string
+  +about: string
+  +solution: Solution
+  +symptoms: number[]
+  +created_at: string
+}
+
+class Solution {
+  +desc: string
+  +image: string | null
+  +list: string | null
+  +link: string | null
+}
+
+class Symptom {
+  +id: number
+  +code: string
+  +name: string
+  +description: string
+  +image: string | null
+  +created_at: string
+}
+
+class User {
+  +id: string
+  +email: string
+  +name: string | null
+  +is_expert: boolean
+  +created_at: string
+}
+
+class DiseaseContext {
+  +editingDisease: Disease | null
+  +newDisease: Disease
+  +imagePreviews: string[]
+  +fileNames: { [key: string]: string }
+  +listItems: string[]
+  +links: string[]
+  +setEditingDisease()
+  +setNewDisease()
+  +setImagePreviews()
+  +setFileNames()
+  +setListItems()
+  +setLinks()
+  +resetForm()
+}
+
+class DiseaseForm {
+  +symptoms: Symptom[]
+  +isLoading: boolean
+  +onAddDisease()
+  +onUpdateDisease()
+  +handleAddListItem()
+  +handleListItemChange()
+  +handleRemoveListItem()
+  +handleAddLink()
+  +handleLinkChange()
+  +handleRemoveLink()
+  +handleSubmit()
+}
+
+class DiseaseTable {
+  +diseases: Disease[]
+  +symptoms: Symptom[]
+  +sortField: "code" | "name"
+  +sortOrder: "asc" | "desc"
+  +onSortFieldChange()
+  +onSortOrderChange()
+  +onEdit()
+  +onDelete()
+  +onImageClick()
+}
+
+class SolutionDialog {
+  +isOpen: boolean
+  +onClose()
+  +solution: Solution | null
+}
+
+Disease "1" -- "1" Solution
+Disease "1" -- "*" Symptom
+DiseaseContext "1" -- "1" Disease
+DiseaseForm "1" -- "*" Symptom
+DiseaseTable "1" -- "*" Disease
+DiseaseTable "1" -- "*" Symptom
+SolutionDialog "1" -- "1" Solution
+
+@enduml
