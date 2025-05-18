@@ -8,12 +8,15 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { PencilIcon, TrashIcon, SearchIcon, SortAscIcon, SortDescIcon, DownloadIcon, UploadIcon } from "lucide-react"
 import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog"
 import { exportToExcel, exportToPDF, parseCSV } from "@/utils/export"
+import Image from "next/image"
+import { ImageIcon, X } from "lucide-react"
 
 interface Symptom {
   id: number
   code: string
   name: string
   description: string
+  image: string | null
   created_at: string
 }
 
@@ -22,7 +25,8 @@ export default function SymptomsPage() {
   const [newSymptom, setNewSymptom] = useState({ 
     code: "",
     name: "", 
-    description: "" 
+    description: "",
+    image: null as string | null
   })
   const [editingSymptom, setEditingSymptom] = useState<Symptom | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -34,6 +38,7 @@ export default function SymptomsPage() {
   const [sortField, setSortField] = useState<"code" | "name">("code")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
   const [filteredSymptoms, setFilteredSymptoms] = useState<Symptom[]>([])
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -107,7 +112,7 @@ export default function SymptomsPage() {
       }
 
       toast.success("Symptom added successfully")
-      setNewSymptom({ code: "", name: "", description: "" })
+      setNewSymptom({ code: "", name: "", description: "", image: null })
       fetchSymptoms()
     } catch (error) {
       console.error('Error:', error)
@@ -147,43 +152,44 @@ export default function SymptomsPage() {
     setNewSymptom({
       code: symptom.code,
       name: symptom.name,
-      description: symptom.description
+      description: symptom.description,
+      image: symptom.image // Make sure image is loaded
     })
+    setImagePreview(symptom.image) // Set image preview
   }
 
-  const handleUpdate = async () => {
+  const handleUpdateSymptom = async () => {
     if (!editingSymptom) return
-    if (!newSymptom.code || !newSymptom.name || !newSymptom.description) {
-      toast.error("Please fill all fields")
+    if (!newSymptom.code || !newSymptom.name) {
+      toast.error("Please fill in all required fields")
       return
     }
 
     setIsLoading(true)
     try {
-      const { error } = await supabase
-        .from('symptoms')
-        .update({
-          code: newSymptom.code,
-          name: newSymptom.name,
-          description: newSymptom.description
-        })
-        .eq('id', editingSymptom.id)
-
-      if (error) {
-        if (error.code === '23505') {
-          toast.error('Symptom code already exists')
-          return
-        }
-        throw error
+      // Prepare the update data
+      const updateData = {
+        code: newSymptom.code,
+        name: newSymptom.name,
+        description: newSymptom.description,
+        image: newSymptom.image // Make sure image is included
       }
+
+      const { error } = await supabase
+        .from("symptoms")
+        .update(updateData)
+        .eq("id", editingSymptom.id)
+
+      if (error) throw error
 
       toast.success("Symptom updated successfully")
       setEditingSymptom(null)
-      setNewSymptom({ code: "", name: "", description: "" })
-      fetchSymptoms()
+      setNewSymptom({ code: "", name: "", description: "", image: null })
+      setImagePreview(null) // Clear image preview
+      await fetchSymptoms() // Refresh the list
     } catch (error) {
-      console.error('Error:', error)
-      toast.error('Failed to update symptom')
+      console.error("Error updating symptom:", error)
+      toast.error("Failed to update symptom")
     } finally {
       setIsLoading(false)
     }
@@ -191,7 +197,8 @@ export default function SymptomsPage() {
 
   const handleCancel = () => {
     setEditingSymptom(null)
-    setNewSymptom({ code: "", name: "", description: "" })
+    setNewSymptom({ code: "", name: "", description: "", image: null })
+    setImagePreview(null)
   }
 
   const handleExportExcel = () => {
@@ -232,27 +239,48 @@ export default function SymptomsPage() {
     }
   }
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image must be less than 2MB")
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      const base64String = reader.result as string
+      setImagePreview(base64String)
+      setNewSymptom(prev => ({ ...prev, image: base64String }))
+    }
+    reader.readAsDataURL(file)
+  }
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Manage Symptoms</h1>
 
       {/* Add/Edit Form */}
       <div className="bg-white rounded-lg p-4 mb-4">
-        <div className="flex gap-4">
-          <input
-            type="text"
-            value={newSymptom.code}
-            onChange={(e) => setNewSymptom({...newSymptom, code: e.target.value})}
-            placeholder="Code"
-            className="w-full px-4 py-2 border rounded-lg"
-          />
-          <input
-            type="text"
-            value={newSymptom.name}
-            onChange={(e) => setNewSymptom({...newSymptom, name: e.target.value})}
-            placeholder="Name"
-            className="w-full px-4 py-2 border rounded-lg"
-          />
+        <div className="space-y-4">
+          <div className="flex gap-4">
+            <input
+              type="text"
+              value={newSymptom.code}
+              onChange={(e) => setNewSymptom({...newSymptom, code: e.target.value})}
+              placeholder="Code"
+              className="w-full px-4 py-2 border rounded-lg"
+            />
+            <input
+              type="text"
+              value={newSymptom.name}
+              onChange={(e) => setNewSymptom({...newSymptom, name: e.target.value})}
+              placeholder="Name"
+              className="w-full px-4 py-2 border rounded-lg"
+            />
+          </div>
+          
           <input
             type="text"
             value={newSymptom.description}
@@ -260,14 +288,52 @@ export default function SymptomsPage() {
             placeholder="Description"
             className="w-full px-4 py-2 border rounded-lg"
           />
-          {editingSymptom ? (
-            <div className="flex gap-2">
-              <button onClick={handleUpdate} className="px-4 py-2 bg-blue-500 text-white rounded-lg">Update</button>
-              <button onClick={handleCancel} className="px-4 py-2 bg-gray-500 text-white rounded-lg">Cancel</button>
-            </div>
-          ) : (
-            <button onClick={handleAddSymptom} className="px-4 py-2 bg-green-500 text-white rounded-lg">Add</button>
-          )}
+
+          <div className="space-y-2">
+            {imagePreview ? (
+              <div className="relative w-32 h-32">
+                <Image
+                  src={imagePreview}
+                  alt="Preview"
+                  fill
+                  className="object-cover rounded-lg"
+                />
+                <button
+                  onClick={() => {
+                    setImagePreview(null)
+                    setNewSymptom(prev => ({ ...prev, image: null }))
+                  }}
+                  className="absolute -top-2 -right-2 p-1 bg-red-500 rounded-full text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center w-32 h-32 border-2 border-dashed rounded-lg">
+                <label className="cursor-pointer p-4 text-center">
+                  <ImageIcon className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                  <span className="text-sm text-gray-500">Upload Image</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-2">
+            {editingSymptom ? (
+              <>
+                <button onClick={handleUpdateSymptom} className="px-4 py-2 bg-blue-500 text-white rounded-lg">Update</button>
+                <button onClick={handleCancel} className="px-4 py-2 bg-gray-500 text-white rounded-lg">Cancel</button>
+              </>
+            ) : (
+              <button onClick={handleAddSymptom} className="px-4 py-2 bg-green-500 text-white rounded-lg">Add</button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -340,6 +406,7 @@ export default function SymptomsPage() {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Code</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Image</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Description</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">Actions</th>
@@ -355,10 +422,24 @@ export default function SymptomsPage() {
                         {symptom.code}
                       </span>
                     </TooltipTrigger>
-                    <TooltipContent>
-                      {symptom.name}
-                    </TooltipContent>
+                    <TooltipContent>{symptom.name}</TooltipContent>
                   </Tooltip>
+                </td>
+                <td className="px-6 py-4">
+                  {symptom.image ? (
+                    <div className="relative w-16 h-16">
+                      <Image
+                        src={symptom.image}
+                        alt={symptom.name}
+                        fill
+                        className="object-cover rounded-lg"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <ImageIcon className="w-8 h-8 text-gray-400" />
+                    </div>
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">{symptom.name}</td>
                 <td className="px-6 py-4">{symptom.description}</td>
