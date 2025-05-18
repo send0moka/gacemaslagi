@@ -4,9 +4,13 @@
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/client"
 import { toast } from "sonner"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { PencilIcon, TrashIcon } from "lucide-react"
+import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog"
 
 interface Disease {
   id: number
+  code: string
   name: string
   description: string
   symptoms: number[]
@@ -15,6 +19,7 @@ interface Disease {
 
 interface Symptom {
   id: number
+  code: string
   name: string
 }
 
@@ -22,11 +27,17 @@ export default function DiseasesPage() {
   const [diseases, setDiseases] = useState<Disease[]>([])
   const [symptoms, setSymptoms] = useState<Symptom[]>([])
   const [newDisease, setNewDisease] = useState({
+    code: "",
     name: "",
     description: "",
     symptoms: [] as number[]
   })
+  const [editingDisease, setEditingDisease] = useState<Disease | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [deleteDialog, setDeleteDialog] = useState({
+    isOpen: false,
+    diseaseId: null as number | null
+  })
   const supabase = createClient()
 
   useEffect(() => {
@@ -56,7 +67,7 @@ export default function DiseasesPage() {
     try {
       const { data, error } = await supabase
         .from('symptoms')
-        .select('id, name')
+        .select('id, code, name')
 
       if (error) {
         console.error('Error fetching symptoms:', error.message)
@@ -70,7 +81,7 @@ export default function DiseasesPage() {
   }
 
   const handleAddDisease = async () => {
-    if (!newDisease.name || !newDisease.description || newDisease.symptoms.length === 0) {
+    if (!newDisease.code || !newDisease.name || !newDisease.description || newDisease.symptoms.length === 0) {
       toast.error("Please fill all fields and select at least one symptom")
       return
     }
@@ -82,42 +93,101 @@ export default function DiseasesPage() {
         .insert([newDisease])
 
       if (error) {
-        console.error('Error adding disease:', error.message)
+        if (error.code === '23505') {
+          toast.error('Disease code already exists')
+          return
+        }
         throw error
       }
 
       toast.success("Disease added successfully")
-      setNewDisease({ name: "", description: "", symptoms: [] })
+      setNewDisease({ code: "", name: "", description: "", symptoms: [] })
       fetchDiseases()
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Error adding disease:', error)
       toast.error('Failed to add disease')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleDeleteDisease = async (id: number) => {
-    const confirmed = window.confirm("Are you sure you want to delete this disease?")
-    if (!confirmed) return
+  const handleEdit = (disease: Disease) => {
+    setEditingDisease(disease)
+    setNewDisease({
+      code: disease.code,
+      name: disease.name,
+      description: disease.description,
+      symptoms: disease.symptoms
+    })
+  }
+
+  const handleUpdate = async () => {
+    if (!editingDisease) return
+    if (!newDisease.code || !newDisease.name || !newDisease.description || newDisease.symptoms.length === 0) {
+      toast.error("Please fill all fields and select at least one symptom")
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const { error } = await supabase
+        .from('diseases')
+        .update({
+          code: newDisease.code,
+          name: newDisease.name,
+          description: newDisease.description,
+          symptoms: newDisease.symptoms
+        })
+        .eq('id', editingDisease.id)
+
+      if (error) {
+        if (error.code === '23505') {
+          toast.error('Disease code already exists')
+          return
+        }
+        throw error
+      }
+
+      toast.success("Disease updated successfully")
+      setEditingDisease(null)
+      setNewDisease({ code: "", name: "", description: "", symptoms: [] })
+      fetchDiseases()
+    } catch (error) {
+      console.error('Error updating disease:', error)
+      toast.error('Failed to update disease')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleDeleteClick = (id: number) => {
+    setDeleteDialog({ isOpen: true, diseaseId: id })
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deleteDialog.diseaseId) return
 
     try {
       const { error } = await supabase
         .from('diseases')
         .delete()
-        .eq('id', id)
+        .eq('id', deleteDialog.diseaseId)
 
-      if (error) {
-        console.error('Error deleting disease:', error.message)
-        throw error
-      }
+      if (error) throw error
 
       toast.success("Disease deleted successfully")
       fetchDiseases()
     } catch (error) {
       console.error('Error:', error)
       toast.error('Failed to delete disease')
+    } finally {
+      setDeleteDialog({ isOpen: false, diseaseId: null })
     }
+  }
+
+  const handleCancel = () => {
+    setEditingDisease(null)
+    setNewDisease({ code: "", name: "", description: "", symptoms: [] })
   }
 
   return (
@@ -125,8 +195,18 @@ export default function DiseasesPage() {
       <h1 className="text-2xl font-bold mb-6">Manage Diseases</h1>
 
       <div className="bg-white rounded-lg p-6 shadow-md mb-8">
-        <h2 className="text-lg font-semibold mb-4">Add New Disease</h2>
+        <h2 className="text-lg font-semibold mb-4">
+          {editingDisease ? 'Edit Disease' : 'Add New Disease'}
+        </h2>
         <div className="space-y-4">
+          <input
+            type="text"
+            value={newDisease.code}
+            onChange={(e) => setNewDisease({ ...newDisease, code: e.target.value.toUpperCase() })}
+            placeholder="Disease code (e.g. P01)"
+            className="w-full px-4 py-2 border rounded-lg"
+            maxLength={10}
+          />
           <input
             type="text"
             value={newDisease.name}
@@ -142,36 +222,58 @@ export default function DiseasesPage() {
             rows={3}
           />
           <div>
-            <label className="block mb-2">Select Symptoms:</label>
-            <select
-              multiple
-              value={newDisease.symptoms.map(String)}
-              onChange={(e) => {
-                const selectedOptions = Array.from(e.target.selectedOptions)
-                setNewDisease({
-                  ...newDisease,
-                  symptoms: selectedOptions.map(option => Number(option.value))
-                })
-              }}
-              className="w-full px-4 py-2 border rounded-lg"
-              size={5}
-            >
+            <label className="block mb-2 font-medium">Select Symptoms:</label>
+            <div className="max-h-60 overflow-y-auto border rounded-lg p-4 space-y-2">
               {symptoms.map((symptom) => (
-                <option key={symptom.id} value={symptom.id}>
-                  {symptom.name}
-                </option>
+                <div key={symptom.id} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id={`symptom-${symptom.id}`}
+                    checked={newDisease.symptoms.includes(symptom.id)}
+                    onChange={(e) => {
+                      const updatedSymptoms = e.target.checked
+                        ? [...newDisease.symptoms, symptom.id]
+                        : newDisease.symptoms.filter(id => id !== symptom.id)
+                      setNewDisease({ ...newDisease, symptoms: updatedSymptoms })
+                    }}
+                    className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                  />
+                  <label htmlFor={`symptom-${symptom.id}`} className="flex items-center gap-2 select-none">
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                          {symptom.code}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {symptom.name}
+                      </TooltipContent>
+                    </Tooltip>
+                    <span className="text-sm text-gray-700">{symptom.name}</span>
+                  </label>
+                </div>
               ))}
-            </select>
+            </div>
           </div>
-          <button
-            onClick={handleAddDisease}
-            disabled={isLoading}
-            className={`px-6 py-2 bg-blue-600 text-white rounded-lg ${
-              isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
-            }`}
-          >
-            {isLoading ? 'Adding...' : 'Add Disease'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={editingDisease ? handleUpdate : handleAddDisease}
+              disabled={isLoading}
+              className={`px-6 py-2 bg-blue-600 text-white rounded-lg ${
+                isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
+              }`}
+            >
+              {isLoading ? 'Saving...' : editingDisease ? 'Update Disease' : 'Add Disease'}
+            </button>
+            {editingDisease && (
+              <button
+                onClick={handleCancel}
+                className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -179,6 +281,7 @@ export default function DiseasesPage() {
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Code</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Description</th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Symptoms</th>
@@ -188,27 +291,66 @@ export default function DiseasesPage() {
           <tbody className="divide-y divide-gray-200">
             {diseases.map((disease) => (
               <tr key={disease.id}>
-                <td className="px-6 py-4 whitespace-nowrap">{disease.name}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">
+                        {disease.code}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {disease.name}
+                    </TooltipContent>
+                  </Tooltip>
+                </td>
+                <td className="px-6 py-4">{disease.name}</td>
                 <td className="px-6 py-4">{disease.description}</td>
                 <td className="px-6 py-4">
-                  {symptoms
-                    .filter(s => disease.symptoms.includes(s.id))
-                    .map(s => s.name)
-                    .join(", ")}
+                  <div className="flex flex-wrap gap-1">
+                    {symptoms
+                      .filter(s => disease.symptoms.includes(s.id))
+                      .map(s => (
+                        <Tooltip key={s.id}>
+                          <TooltipTrigger>
+                            <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                              {s.code}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {s.name}
+                          </TooltipContent>
+                        </Tooltip>
+                      ))}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right">
-                  <button
-                    onClick={() => handleDeleteDisease(disease.id)}
-                    className="text-red-600 hover:text-red-800"
-                  >
-                    Delete
-                  </button>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => handleEdit(disease)}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                    >
+                      <PencilIcon className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteClick(disease.id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      <DeleteConfirmDialog
+        isOpen={deleteDialog.isOpen}
+        onClose={() => setDeleteDialog({ isOpen: false, diseaseId: null })}
+        onConfirm={handleConfirmDelete}
+        itemType="Disease"
+      />
     </div>
   )
 }
