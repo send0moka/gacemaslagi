@@ -8,14 +8,38 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { PencilIcon, TrashIcon } from "lucide-react"
 import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog"
 import { exportToPDF } from "@/lib/utils/export"
+import { LexicalEditor } from '@/components/editor/LexicalEditor'
+
+interface LexicalNode {
+  children?: {
+    text: string;
+  }[];
+}
+
+interface Solution {
+  root: {
+    children: Array<{
+      children: Array<{
+        text: string;
+        type: string;
+      }>;
+      type: string;
+    }>;
+    direction: string;
+    format: string;
+    indent: number;
+    type: string;
+    version: number;
+  }
+}
 
 interface Disease {
-  id: number
-  code: string
-  name: string
-  description: string
-  symptoms: number[]
-  created_at: string
+  id: number;
+  code: string;
+  name: string;
+  solution: Solution | string;
+  symptoms: number[];
+  created_at: string;
 }
 
 interface Symptom {
@@ -30,7 +54,7 @@ export default function DiseasesPage() {
   const [newDisease, setNewDisease] = useState({
     code: "",
     name: "",
-    description: "",
+    solution: "", // Initialize as empty string
     symptoms: [] as number[]
   })
   const [editingDisease, setEditingDisease] = useState<Disease | null>(null)
@@ -97,7 +121,7 @@ export default function DiseasesPage() {
       filtered = filtered.filter(
         d => d.code.toLowerCase().includes(search.toLowerCase()) ||
              d.name.toLowerCase().includes(search.toLowerCase()) ||
-             d.description.toLowerCase().includes(search.toLowerCase())
+             getSolutionText(d.solution).toLowerCase().includes(search.toLowerCase())
       )
     }
 
@@ -114,7 +138,7 @@ export default function DiseasesPage() {
   }, [diseases, search, sortField, sortOrder])
 
   const handleAddDisease = async () => {
-    if (!newDisease.code || !newDisease.name || !newDisease.description || newDisease.symptoms.length === 0) {
+    if (!newDisease.code || !newDisease.name || !newDisease.solution || newDisease.symptoms.length === 0) {
       toast.error("Please fill all fields and select at least one symptom")
       return
     }
@@ -134,7 +158,7 @@ export default function DiseasesPage() {
       }
 
       toast.success("Disease added successfully")
-      setNewDisease({ code: "", name: "", description: "", symptoms: [] })
+      setNewDisease({ code: "", name: "", solution: "", symptoms: [] })
       fetchDiseases()
     } catch (error) {
       console.error('Error adding disease:', error)
@@ -149,14 +173,16 @@ export default function DiseasesPage() {
     setNewDisease({
       code: disease.code,
       name: disease.name,
-      description: disease.description,
+      solution: typeof disease.solution === 'string' 
+        ? disease.solution 
+        : JSON.stringify(disease.solution),
       symptoms: disease.symptoms
     })
   }
 
   const handleUpdate = async () => {
     if (!editingDisease) return
-    if (!newDisease.code || !newDisease.name || !newDisease.description || newDisease.symptoms.length === 0) {
+    if (!newDisease.code || !newDisease.name || !newDisease.solution || newDisease.symptoms.length === 0) {
       toast.error("Please fill all fields and select at least one symptom")
       return
     }
@@ -168,7 +194,7 @@ export default function DiseasesPage() {
         .update({
           code: newDisease.code,
           name: newDisease.name,
-          description: newDisease.description,
+          solution: newDisease.solution,
           symptoms: newDisease.symptoms
         })
         .eq('id', editingDisease.id)
@@ -183,7 +209,7 @@ export default function DiseasesPage() {
 
       toast.success("Disease updated successfully")
       setEditingDisease(null)
-      setNewDisease({ code: "", name: "", description: "", symptoms: [] })
+      setNewDisease({ code: "", name: "", solution: "", symptoms: [] })
       fetchDiseases()
     } catch (error) {
       console.error('Error updating disease:', error)
@@ -220,21 +246,56 @@ export default function DiseasesPage() {
 
   const handleCancel = () => {
     setEditingDisease(null)
-    setNewDisease({ code: "", name: "", description: "", symptoms: [] })
+    setNewDisease({ code: "", name: "", solution: "", symptoms: [] })
   }
 
   const handleExportPDF = () => {
     const formattedData = filteredDiseases.map(d => ({
       Code: d.code,
       Name: d.name,
-      Description: d.description,
-      Symptoms: symptoms
-        .filter(s => d.symptoms.includes(s.id))
-        .map(s => s.code)
-        .join(', ')
+      Solution: (typeof d.solution === 'string' ? JSON.parse(d.solution) : d.solution).root.children
+        .map((node: LexicalNode) => 
+          node.children?.map((child: { text: string }) => child.text).join('') || ''
+        ).join('\n')
     }))
     exportToPDF(formattedData, 'diseases')
   }
+
+  const getSolutionText = (solution: Disease['solution'] | string): string => {
+    try {
+      // Handle string JSON
+      const parsedSolution = typeof solution === 'string' 
+        ? JSON.parse(solution) 
+        : solution;
+
+      // Extract text from the JSON structure
+      return parsedSolution?.root?.children?.[0]?.children?.[0]?.text || ''
+    } catch (error) {
+      console.error('Error parsing solution:', error)
+      return ''
+    }
+  }
+
+  const renderSolution = (solution: Solution | string) => {
+    try {
+      const parsedSolution = typeof solution === 'string' 
+        ? JSON.parse(solution) as Solution
+        : solution;
+
+      return parsedSolution?.root?.children?.map((block, blockIndex) => (
+        <div key={blockIndex}>
+          {block.children?.map((child, childIndex) => (
+            <span key={`${blockIndex}-${childIndex}`}>
+              {child.text}
+            </span>
+          ))}
+        </div>
+      ));
+    } catch (error) {
+      console.error('Error parsing solution:', error);
+      return <span className="text-red-500">Error displaying solution</span>;
+    }
+  };
 
   return (
     <div>
@@ -260,13 +321,13 @@ export default function DiseasesPage() {
             placeholder="Disease name"
             className="w-full px-4 py-2 border rounded-lg"
           />
-          <textarea
-            value={newDisease.description}
-            onChange={(e) => setNewDisease({ ...newDisease, description: e.target.value })}
-            placeholder="Disease description"
-            className="w-full px-4 py-2 border rounded-lg"
-            rows={3}
-          />
+          <div>
+            <label className="block mb-2">Solution:</label>
+            <LexicalEditor
+              initialValue={newDisease.solution}
+              onChange={(value) => setNewDisease({ ...newDisease, solution: value })}
+            />
+          </div>
           <div>
             <label className="block mb-2 font-medium">Select Symptoms:</label>
             <div className="max-h-60 overflow-y-auto border rounded-lg p-4 space-y-2">
@@ -323,56 +384,37 @@ export default function DiseasesPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md mb-8">
-        <div className="p-4 border-b">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search diseases..."
-            className="w-full px-4 py-2 border rounded-lg"
-          />
-        </div>
+      <div className="mb-4">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search diseases..."
+          className="w-full px-4 py-2 border rounded-lg"
+        />
+      </div>
+
+      <div className="bg-white rounded-lg shadow-md">
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                <div className="flex items-center gap-2">
-                  Code
-                  <button
-                    onClick={() => {
-                      setSortField("code")
-                      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
-                    }}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    {sortField === "code" && (sortOrder === "asc" ? "▲" : "▼")}
-                  </button>
-                </div>
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                <div className="flex items-center gap-2">
-                  Name
-                  <button
-                    onClick={() => {
-                      setSortField("name")
-                      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
-                    }}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    {sortField === "name" && (sortOrder === "asc" ? "▲" : "▼")}
-                  </button>
-                </div>
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                Description
-              </th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
-                Symptoms
-              </th>
-              <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
-                Actions
-              </th>
+              <th 
+                className="px-6 py-3 text-left text-sm font-semibold text-gray-900 cursor-pointer"
+                onClick={() => {
+                  setSortField("code");
+                  setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                }}
+              >Code</th>
+              <th 
+                className="px-6 py-3 text-left text-sm font-semibold text-gray-900 cursor-pointer"
+                onClick={() => {
+                  setSortField("name");
+                  setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+                }}
+              >Name</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Solution</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Symptoms</th>
+              <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -390,8 +432,14 @@ export default function DiseasesPage() {
                     </TooltipContent>
                   </Tooltip>
                 </td>
-                <td className="px-6 py-4">{disease.name}</td>
-                <td className="px-6 py-4">{disease.description}</td>
+                <td className="px-6 py-4">
+                  <div className="prose prose-sm max-w-none">
+                    {getSolutionText(disease.solution)}
+                  </div>
+                </td>
+                <td className="px-6 py-4 prose prose-sm max-w-none">
+                  {renderSolution(disease.solution)}
+                </td>
                 <td className="px-6 py-4">
                   <div className="flex flex-wrap gap-1">
                     {symptoms
