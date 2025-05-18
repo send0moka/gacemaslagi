@@ -70,8 +70,16 @@ export function useDiseasesData(
     setIsLoading(true)
     try {
       // Validate the data before sending
-      if (!newDisease.code || !newDisease.name || !newDisease.solution.desc || !newDisease.symptoms.length) {
-        toast.error("Please fill all required fields and select at least one symptom")
+      if (
+        !newDisease.code ||
+        !newDisease.name ||
+        !newDisease.about ||  // Add this line
+        !newDisease.solution.desc ||
+        !newDisease.symptoms.length
+      ) {
+        toast.error(
+          "Please fill all required fields and select at least one symptom"
+        )
         return false
       }
 
@@ -87,29 +95,19 @@ export function useDiseasesData(
         return false
       }
 
-      // Prepare the disease data
-      const diseaseData = {
-        code: newDisease.code,
-        name: newDisease.name,
-        solution: newDisease.solution,
-        symptoms: newDisease.symptoms,
-      }
-
-      // Insert the new disease
-      const { data, error } = await supabase
-        .from("diseases")
-        .insert([diseaseData])
-        .select()
-        .single()
+      const { error } = await supabase.from("diseases").insert([
+        {
+          code: newDisease.code,
+          name: newDisease.name,
+          about: newDisease.about, // Add this line
+          solution: newDisease.solution,
+          symptoms: newDisease.symptoms,
+        },
+      ])
 
       if (error) {
         console.error("Database error:", error)
         toast.error(error.message || "Failed to add disease")
-        return false
-      }
-
-      if (!data) {
-        toast.error("No data returned from database")
         return false
       }
 
@@ -129,27 +127,62 @@ export function useDiseasesData(
   const handleUpdateDisease = async (
     id: number,
     updatedDisease: Omit<Disease, "id" | "created_at">
-  ) => {
+  ): Promise<boolean> => {
     setIsLoading(true)
     try {
+      // Validate inputs
+      if (
+        !updatedDisease.code ||
+        !updatedDisease.name ||
+        !updatedDisease.about ||
+        !updatedDisease.solution.desc ||
+        !updatedDisease.symptoms.length
+      ) {
+        toast.error("Please fill all required fields and select at least one symptom")
+        return false
+      }
+
+      // Check for duplicate code
+      const { data: existingDisease } = await supabase
+        .from("diseases")
+        .select("id, code")
+        .eq("code", updatedDisease.code)
+        .neq("id", id)
+        .single()
+
+      if (existingDisease) {
+        toast.error(`Disease with code ${updatedDisease.code} already exists`)
+        return false
+      }
+
+      // Prepare the disease data - make sure to include 'about'
+      const diseaseData = {
+        code: updatedDisease.code,
+        name: updatedDisease.name,
+        about: updatedDisease.about, // Add this line
+        solution: updatedDisease.solution,
+        symptoms: updatedDisease.symptoms,
+      }
+
+      // Update the disease
       const { error } = await supabase
         .from("diseases")
-        .update({
-          code: updatedDisease.code,
-          name: updatedDisease.name,
-          solution: JSON.stringify(updatedDisease.solution),
-          symptoms: updatedDisease.symptoms,
-        })
+        .update(diseaseData)
         .eq("id", id)
 
-      if (error) throw error
+      if (error) {
+        console.error("Database error:", error)
+        toast.error(error.message || "Failed to update disease")
+        return false
+      }
 
       toast.success("Disease updated successfully")
-      fetchDiseases()
+      await fetchDiseases() // Refresh the list
       return true
-    } catch (err) {
-      console.error("Failed to update disease:", err)
-      toast.error("Failed to update disease")
+
+    } catch (error) {
+      console.error("Error details:", error)
+      toast.error(error instanceof Error ? error.message : "An unexpected error occurred")
       return false
     } finally {
       setIsLoading(false)

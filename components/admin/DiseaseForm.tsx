@@ -154,6 +154,23 @@ export default function DiseaseForm({
         />
 
         <div>
+          <label className="block mb-2">About Disease:</label>
+          <textarea
+            value={newDisease.about}
+            onChange={(e) =>
+              setNewDisease({
+                ...newDisease,
+                about: e.target.value,
+              })
+            }
+            placeholder="Enter about disease..."
+            className="w-full px-4 py-2 border rounded-lg min-h-[100px]"
+            rows={4}
+            required
+          />
+        </div>
+
+        <div>
           <label className="block mb-2">Solution:</label>
           <div className="space-y-4">
             {/* Description Input */}

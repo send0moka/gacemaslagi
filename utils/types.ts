@@ -2,6 +2,7 @@ export interface Disease {
   id: number
   code: string
   name: string
+  about: string // Add this line
   solution: {
     desc: string
     image: string | null

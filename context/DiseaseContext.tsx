@@ -7,6 +7,7 @@ interface DiseaseContextType {
   newDisease: {
     code: string
     name: string
+    about: string // Add this line
     solution: {
       desc: string
       image: string | null
@@ -19,6 +20,7 @@ interface DiseaseContextType {
     React.SetStateAction<{
       code: string
       name: string
+      about: string // Add this line
       solution: {
         desc: string
         image: string | null
@@ -39,26 +41,17 @@ interface DiseaseContextType {
   resetForm: () => void
 }
 
-const defaultDiseaseState: {
-  code: string
-  name: string
-  solution: {
-    desc: string
-    image: string | null
-    list: string | null
-    link: string | null
-  }
-  symptoms: number[]
-} = {
+const defaultDiseaseState = {
   code: "",
   name: "",
+  about: "", // Add this line
   solution: {
     desc: "",
-    image: null,
-    list: null,
-    link: null,
+    image: null as string | null,
+    list: null as string | null,
+    link: null as string | null,
   },
-  symptoms: [],
+  symptoms: [] as number[],
 }
 
 const DiseaseContext = createContext<DiseaseContextType | undefined>(undefined)
