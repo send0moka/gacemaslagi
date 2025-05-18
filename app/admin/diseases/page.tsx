@@ -48,13 +48,28 @@ interface Symptom {
   name: string
 }
 
+const defaultContent = {
+  root: {
+    children: [{
+      children: [{ text: '', type: 'text' }],
+      type: 'paragraph',
+      direction: null,
+    }],
+    direction: 'ltr',
+    format: '',
+    indent: 0,
+    type: 'root',
+    version: 1,
+  }
+}
+
 export default function DiseasesPage() {
   const [diseases, setDiseases] = useState<Disease[]>([])
   const [symptoms, setSymptoms] = useState<Symptom[]>([])
   const [newDisease, setNewDisease] = useState({
     code: "",
     name: "",
-    solution: "", // Initialize as empty string
+    solution: JSON.stringify(defaultContent),
     symptoms: [] as number[]
   })
   const [editingDisease, setEditingDisease] = useState<Disease | null>(null)
@@ -137,37 +152,6 @@ export default function DiseasesPage() {
     setFilteredDiseases(filtered)
   }, [diseases, search, sortField, sortOrder])
 
-  const handleAddDisease = async () => {
-    if (!newDisease.code || !newDisease.name || !newDisease.solution || newDisease.symptoms.length === 0) {
-      toast.error("Please fill all fields and select at least one symptom")
-      return
-    }
-
-    setIsLoading(true)
-    try {
-      const { error } = await supabase
-        .from('diseases')
-        .insert([newDisease])
-
-      if (error) {
-        if (error.code === '23505') {
-          toast.error('Disease code already exists')
-          return
-        }
-        throw error
-      }
-
-      toast.success("Disease added successfully")
-      setNewDisease({ code: "", name: "", solution: "", symptoms: [] })
-      fetchDiseases()
-    } catch (error) {
-      console.error('Error adding disease:', error)
-      toast.error('Failed to add disease')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleEdit = (disease: Disease) => {
     setEditingDisease(disease)
     setNewDisease({
@@ -178,6 +162,45 @@ export default function DiseasesPage() {
         : JSON.stringify(disease.solution),
       symptoms: disease.symptoms
     })
+  }
+
+  const handleAddDisease = async () => {
+    if (!newDisease.code || !newDisease.name || !newDisease.symptoms.length) {
+      toast.error("Please fill all fields and select at least one symptom")
+      return
+    }
+
+    try {
+      const solutionData = JSON.parse(newDisease.solution)
+      if (!solutionData?.root?.children?.[0]?.children?.[0]?.text) {
+        toast.error("Please enter a solution")
+        return
+      }
+
+      setIsLoading(true)
+      const { error: supabaseError } = await supabase
+        .from('diseases')
+        .insert([{
+          ...newDisease,
+          solution: solutionData
+        }])
+
+      if (supabaseError) throw supabaseError
+
+      toast.success("Disease added successfully")
+      setNewDisease({
+        code: "",
+        name: "",
+        solution: JSON.stringify(defaultContent),
+        symptoms: []
+      })
+      fetchDiseases()
+    } catch (err) {
+      console.error('Failed to add disease:', err)
+      toast.error('Failed to add disease')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleUpdate = async () => {
