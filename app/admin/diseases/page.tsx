@@ -1,12 +1,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/client"
 import { toast } from "sonner"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { PencilIcon, TrashIcon } from "lucide-react"
 import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog"
+import { exportToPDF } from "@/lib/utils/export"
 
 interface Disease {
   id: number
@@ -38,12 +39,20 @@ export default function DiseasesPage() {
     isOpen: false,
     diseaseId: null as number | null
   })
+  const [search, setSearch] = useState("")
+  const [sortField, setSortField] = useState<"code" | "name">("code")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
+  const [filteredDiseases, setFilteredDiseases] = useState<Disease[]>([])
   const supabase = createClient()
 
   useEffect(() => {
     fetchDiseases()
     fetchSymptoms()
   }, [])
+
+  useEffect(() => {
+    filterAndSortDiseases()
+  }, [diseases, search, sortField, sortOrder])
 
   const fetchDiseases = async () => {
     try {
@@ -79,6 +88,30 @@ export default function DiseasesPage() {
       toast.error('Failed to fetch symptoms')
     }
   }
+
+  const filterAndSortDiseases = useCallback(() => {
+    let filtered = [...diseases]
+    
+    // Apply search
+    if (search) {
+      filtered = filtered.filter(
+        d => d.code.toLowerCase().includes(search.toLowerCase()) ||
+             d.name.toLowerCase().includes(search.toLowerCase()) ||
+             d.description.toLowerCase().includes(search.toLowerCase())
+      )
+    }
+
+    // Apply sort
+    filtered.sort((a, b) => {
+      const aValue = a[sortField].toLowerCase()
+      const bValue = b[sortField].toLowerCase()
+      return sortOrder === "asc" 
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue)
+    })
+
+    setFilteredDiseases(filtered)
+  }, [diseases, search, sortField, sortOrder])
 
   const handleAddDisease = async () => {
     if (!newDisease.code || !newDisease.name || !newDisease.description || newDisease.symptoms.length === 0) {
@@ -190,6 +223,19 @@ export default function DiseasesPage() {
     setNewDisease({ code: "", name: "", description: "", symptoms: [] })
   }
 
+  const handleExportPDF = () => {
+    const formattedData = filteredDiseases.map(d => ({
+      Code: d.code,
+      Name: d.name,
+      Description: d.description,
+      Symptoms: symptoms
+        .filter(s => d.symptoms.includes(s.id))
+        .map(s => s.code)
+        .join(', ')
+    }))
+    exportToPDF(formattedData, 'diseases')
+  }
+
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Manage Diseases</h1>
@@ -277,19 +323,60 @@ export default function DiseasesPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md">
+      <div className="bg-white rounded-lg shadow-md mb-8">
+        <div className="p-4 border-b">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search diseases..."
+            className="w-full px-4 py-2 border rounded-lg"
+          />
+        </div>
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Code</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Description</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Symptoms</th>
-              <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">Actions</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                <div className="flex items-center gap-2">
+                  Code
+                  <button
+                    onClick={() => {
+                      setSortField("code")
+                      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                    }}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    {sortField === "code" && (sortOrder === "asc" ? "▲" : "▼")}
+                  </button>
+                </div>
+              </th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                <div className="flex items-center gap-2">
+                  Name
+                  <button
+                    onClick={() => {
+                      setSortField("name")
+                      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                    }}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    {sortField === "name" && (sortOrder === "asc" ? "▲" : "▼")}
+                  </button>
+                </div>
+              </th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                Description
+              </th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                Symptoms
+              </th>
+              <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {diseases.map((disease) => (
+            {filteredDiseases.map((disease) => (
               <tr key={disease.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Tooltip>
@@ -343,6 +430,15 @@ export default function DiseasesPage() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={handleExportPDF}
+          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+        >
+          Export to PDF
+        </button>
       </div>
 
       <DeleteConfirmDialog
