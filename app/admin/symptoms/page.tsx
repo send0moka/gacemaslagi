@@ -457,10 +457,12 @@ export default function SymptomsPage() {
                 <td className="px-6 py-4">
                   {symptom.image && (
                     <div className="relative w-24 h-24">
-                      <img
+                      <Image
                         src={symptom.image}
                         alt={symptom.name}
-                        className="rounded-lg object-cover w-full h-full"
+                        className="rounded-lg object-cover"
+                        fill
+                        unoptimized={true}
                       />
                     </div>
                   )}

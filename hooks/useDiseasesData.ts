@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/client"
 import { toast } from "sonner"
 import { Disease } from "@/utils/types"
+import { useUploadDiseaseImage } from "@/hooks/useUploadDiseaseImage"
 
 export function useDiseasesData(
   search: string,
@@ -12,6 +13,8 @@ export function useDiseasesData(
   const [filteredDiseases, setFilteredDiseases] = useState<Disease[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const supabase = createClient()
+
+  const { uploadImage } = useUploadDiseaseImage()
 
   const fetchDiseases = useCallback(async () => {
     try {
@@ -73,7 +76,7 @@ export function useDiseasesData(
       if (
         !newDisease.code ||
         !newDisease.name ||
-        !newDisease.about ||  // Add this line
+        !newDisease.about ||
         !newDisease.solution.desc ||
         !newDisease.symptoms.length
       ) {
@@ -81,6 +84,12 @@ export function useDiseasesData(
           "Please fill all required fields and select at least one symptom"
         )
         return false
+      }
+
+      // Upload image if exists
+      let imageUrl = null
+      if (newDisease.solution.image) {
+        imageUrl = await uploadImage(newDisease.solution.image)
       }
 
       // Check for duplicate code
@@ -99,17 +108,16 @@ export function useDiseasesData(
         {
           code: newDisease.code,
           name: newDisease.name,
-          about: newDisease.about, // Add this line
-          solution: newDisease.solution,
+          about: newDisease.about,
+          solution: {
+            ...newDisease.solution,
+            image: imageUrl, // Use the uploaded image URL
+          },
           symptoms: newDisease.symptoms,
         },
       ])
 
-      if (error) {
-        console.error("Database error:", error)
-        toast.error(error.message || "Failed to add disease")
-        return false
-      }
+      if (error) throw error
 
       toast.success("Disease added successfully")
       await fetchDiseases()
@@ -142,6 +150,12 @@ export function useDiseasesData(
         return false
       }
 
+      // Upload new image if exists
+      let imageUrl = updatedDisease.solution.image
+      if (imageUrl && imageUrl.startsWith('data:image')) {
+        imageUrl = await uploadImage(imageUrl)
+      }
+
       // Check for duplicate code
       const { data: existingDisease } = await supabase
         .from("diseases")
@@ -155,29 +169,26 @@ export function useDiseasesData(
         return false
       }
 
-      // Prepare the disease data - make sure to include 'about'
       const diseaseData = {
         code: updatedDisease.code,
         name: updatedDisease.name,
-        about: updatedDisease.about, // Add this line
-        solution: updatedDisease.solution,
+        about: updatedDisease.about,
+        solution: {
+          ...updatedDisease.solution,
+          image: imageUrl, // Use the uploaded image URL
+        },
         symptoms: updatedDisease.symptoms,
       }
 
-      // Update the disease
       const { error } = await supabase
         .from("diseases")
         .update(diseaseData)
         .eq("id", id)
 
-      if (error) {
-        console.error("Database error:", error)
-        toast.error(error.message || "Failed to update disease")
-        return false
-      }
+      if (error) throw error
 
       toast.success("Disease updated successfully")
-      await fetchDiseases() // Refresh the list
+      await fetchDiseases()
       return true
 
     } catch (error) {
