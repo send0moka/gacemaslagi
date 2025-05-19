@@ -3,7 +3,10 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/client"
+import { useUploadImage } from "@/hooks/useUploadImage"
 import { toast } from "sonner"
+
+const supabase = createClient()
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { PencilIcon, TrashIcon, SearchIcon, SortAscIcon, SortDescIcon, DownloadIcon, UploadIcon } from "lucide-react"
 import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog"
@@ -39,7 +42,7 @@ export default function SymptomsPage() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
   const [filteredSymptoms, setFilteredSymptoms] = useState<Symptom[]>([])
   const [imagePreview, setImagePreview] = useState<string | null>(null)
-  const supabase = createClient()
+  const { uploadImage, isUploading } = useUploadImage()
 
   useEffect(() => {
     fetchSymptoms()
@@ -91,29 +94,50 @@ export default function SymptomsPage() {
     setFilteredSymptoms(filtered)
   }, [symptoms, search, sortField, sortOrder])
 
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      const reader = new FileReader()
+      reader.onload = async (event) => {
+        const base64String = event.target?.result as string
+        setImagePreview(base64String)
+        setNewSymptom(prev => ({ ...prev, image: base64String }))
+      }
+      reader.readAsDataURL(file)
+    } catch (error) {
+      console.error('Error reading file:', error)
+      toast.error('Failed to process image')
+    }
+  }
+
   const handleAddSymptom = async () => {
     if (!newSymptom.code || !newSymptom.name || !newSymptom.description) {
-      toast.error("Please fill all fields")
+      toast.error("Please fill all required fields")
       return
     }
 
     setIsLoading(true)
     try {
-      const { error } = await supabase
-        .from('symptoms')
-        .insert([newSymptom])
-
-      if (error) {
-        if (error.code === '23505') {
-          toast.error('Symptom code already exists')
-          return
-        }
-        throw error
+      let imageUrl = null
+      if (newSymptom.image) {
+        imageUrl = await uploadImage(newSymptom.image)
       }
+
+      const { error } = await createClient()
+        .from('symptoms')
+        .insert([{
+          ...newSymptom,
+          image: imageUrl
+        }])
+
+      if (error) throw error
 
       toast.success("Symptom added successfully")
       setNewSymptom({ code: "", name: "", description: "", image: null })
-      fetchSymptoms()
+      setImagePreview(null)
+      await fetchSymptoms()
     } catch (error) {
       console.error('Error:', error)
       toast.error('Failed to add symptom')
@@ -161,23 +185,26 @@ export default function SymptomsPage() {
   const handleUpdateSymptom = async () => {
     if (!editingSymptom) return
     if (!newSymptom.code || !newSymptom.name) {
-      toast.error("Please fill in all required fields")
+      toast.error("Please fill all required fields")
       return
     }
 
     setIsLoading(true)
     try {
-      // Prepare the update data
-      const updateData = {
-        code: newSymptom.code,
-        name: newSymptom.name,
-        description: newSymptom.description,
-        image: newSymptom.image // Make sure image is included
+      let imageUrl = editingSymptom.image
+
+      if (newSymptom.image && newSymptom.image !== editingSymptom.image) {
+        imageUrl = await uploadImage(newSymptom.image)
       }
 
-      const { error } = await supabase
+      const { error } = await createClient()
         .from("symptoms")
-        .update(updateData)
+        .update({
+          code: newSymptom.code,
+          name: newSymptom.name,
+          description: newSymptom.description,
+          image: imageUrl
+        })
         .eq("id", editingSymptom.id)
 
       if (error) throw error
@@ -185,11 +212,11 @@ export default function SymptomsPage() {
       toast.success("Symptom updated successfully")
       setEditingSymptom(null)
       setNewSymptom({ code: "", name: "", description: "", image: null })
-      setImagePreview(null) // Clear image preview
-      await fetchSymptoms() // Refresh the list
+      setImagePreview(null)
+      await fetchSymptoms()
     } catch (error) {
-      console.error("Error updating symptom:", error)
-      toast.error("Failed to update symptom")
+      console.error('Error:', error)
+      toast.error('Failed to update symptom')
     } finally {
       setIsLoading(false)
     }
@@ -239,24 +266,6 @@ export default function SymptomsPage() {
     }
   }
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Image must be less than 2MB")
-      return
-    }
-
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      const base64String = reader.result as string
-      setImagePreview(base64String)
-      setNewSymptom(prev => ({ ...prev, image: base64String }))
-    }
-    reader.readAsDataURL(file)
-  }
-
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Manage Symptoms</h1>
@@ -291,12 +300,15 @@ export default function SymptomsPage() {
 
           <div className="space-y-2">
             {imagePreview ? (
+              // Preview image
               <div className="relative w-32 h-32">
                 <Image
                   src={imagePreview}
                   alt="Preview"
-                  fill
-                  className="object-cover rounded-lg"
+                  width={128}
+                  height={128}
+                  className="rounded-lg object-cover w-full h-full"
+                  unoptimized={true}
                 />
                 <button
                   onClick={() => {
@@ -327,11 +339,28 @@ export default function SymptomsPage() {
           <div className="flex gap-2">
             {editingSymptom ? (
               <>
-                <button onClick={handleUpdateSymptom} className="px-4 py-2 bg-blue-500 text-white rounded-lg">Update</button>
-                <button onClick={handleCancel} className="px-4 py-2 bg-gray-500 text-white rounded-lg">Cancel</button>
+                <button 
+                  onClick={handleUpdateSymptom} 
+                  disabled={isLoading || isUploading}
+                  className={`px-4 py-2 bg-blue-500 text-white rounded-lg ${(isLoading || isUploading) ? 'opacity-50' : ''}`}
+                >
+                  {isLoading || isUploading ? 'Updating...' : 'Update'}
+                </button>
+                <button 
+                  onClick={handleCancel}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-lg"
+                >
+                  Cancel
+                </button>
               </>
             ) : (
-              <button onClick={handleAddSymptom} className="px-4 py-2 bg-green-500 text-white rounded-lg">Add</button>
+              <button 
+                onClick={handleAddSymptom}
+                disabled={isLoading || isUploading}
+                className={`px-4 py-2 bg-green-500 text-white rounded-lg ${(isLoading || isUploading) ? 'opacity-50' : ''}`}
+              >
+                {isLoading || isUploading ? 'Adding...' : 'Add'}
+              </button>
             )}
           </div>
         </div>
@@ -426,18 +455,13 @@ export default function SymptomsPage() {
                   </Tooltip>
                 </td>
                 <td className="px-6 py-4">
-                  {symptom.image ? (
-                    <div className="relative w-16 h-16">
-                      <Image
+                  {symptom.image && (
+                    <div className="relative w-24 h-24">
+                      <img
                         src={symptom.image}
                         alt={symptom.name}
-                        fill
-                        className="object-cover rounded-lg"
+                        className="rounded-lg object-cover w-full h-full"
                       />
-                    </div>
-                  ) : (
-                    <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                      <ImageIcon className="w-8 h-8 text-gray-400" />
                     </div>
                   )}
                 </td>
