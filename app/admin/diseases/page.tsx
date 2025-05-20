@@ -62,7 +62,13 @@ export default function DiseasesPage() {
   }
 
   const handleExportPDF = async () => {
-    await exportDiseaseToPDF(filteredDiseases, symptoms)
+    try {
+      await exportDiseaseToPDF(filteredDiseases, symptoms)
+      toast.success("PDF exported successfully")
+    } catch (error) {
+      console.error("Export error:", error)
+      toast.error("Failed to export PDF")
+    }
   }
 
   return (
