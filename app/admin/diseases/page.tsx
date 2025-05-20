@@ -1,18 +1,17 @@
 "use client"
 
 import { useState } from "react"
-import { createClient } from "@/lib/client"
 import { toast } from "sonner"
 import { exportDiseaseToPDF } from "@/utils/export"
 import DiseaseTable from "@/components/admin/DiseaseTable"
 import ImageModal from "@/components/admin/ImageModal"
-import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog"
 import { useDiseasesData } from "@/hooks/useDiseasesData"
 import { useSymptomsData } from "@/hooks/useSymptomsData"
 import DiseaseForm from "@/components/admin/DiseaseForm"
 import { DiseaseProvider } from "@/context/DiseaseContext"
 import DiseaseSearch from "@/components/admin/DiseaseSearch"
 import ExportButton from "@/components/admin/ExportButton"
+import DiseaseDelete from "@/components/admin/DiseaseDelete"
 
 export default function DiseasesPage() {
   const [search, setSearch] = useState("")
@@ -37,28 +36,6 @@ export default function DiseasesPage() {
 
   const handleDeleteClick = (id: number) => {
     setDeleteDialog({ isOpen: true, diseaseId: id })
-  }
-
-  const handleConfirmDelete = async () => {
-    if (!deleteDialog.diseaseId) return
-    const supabase = createClient()
-
-    try {
-      const { error } = await supabase
-        .from("diseases")
-        .delete()
-        .eq("id", deleteDialog.diseaseId)
-
-      if (error) throw error
-
-      toast.success("Disease deleted successfully")
-      fetchDiseases()
-    } catch (error) {
-      console.error("Error:", error)
-      toast.error("Failed to delete disease")
-    } finally {
-      setDeleteDialog({ isOpen: false, diseaseId: null })
-    }
   }
 
   const handleExportPDF = async () => {
@@ -101,11 +78,10 @@ export default function DiseasesPage() {
 
         <ExportButton onExport={handleExportPDF} />
 
-        <DeleteConfirmDialog
-          isOpen={deleteDialog.isOpen}
-          onClose={() => setDeleteDialog({ isOpen: false, diseaseId: null })}
-          onConfirm={handleConfirmDelete}
-          itemType="Disease"
+        <DiseaseDelete
+          deleteDialog={deleteDialog}
+          setDeleteDialog={setDeleteDialog}
+          fetchDiseases={fetchDiseases}
         />
 
         {selectedImage && (
