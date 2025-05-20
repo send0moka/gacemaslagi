@@ -10,7 +10,9 @@ import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog"
 import { useDiseasesData } from "@/hooks/useDiseasesData"
 import { useSymptomsData } from "@/hooks/useSymptomsData"
 import DiseaseForm from "@/components/admin/DiseaseForm"
-import { DiseaseProvider } from "@/context/DiseaseContext" // Add this import
+import { DiseaseProvider } from "@/context/DiseaseContext"
+import DiseaseSearch from "@/components/admin/DiseaseSearch"
+import ExportButton from "@/components/admin/ExportButton"
 
 export default function DiseasesPage() {
   const [search, setSearch] = useState("")
@@ -65,8 +67,6 @@ export default function DiseasesPage() {
 
   return (
     <DiseaseProvider>
-      {" "}
-      {/* Wrap the entire content with DiseaseProvider */}
       <div>
         <h1 className="text-2xl font-bold mb-6">Manage Diseases</h1>
 
@@ -77,15 +77,7 @@ export default function DiseasesPage() {
           onUpdateDisease={handleUpdateDisease}
         />
 
-        <div className="mb-4">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search diseases..."
-            className="w-full px-4 py-2 border rounded-lg"
-          />
-        </div>
+        <DiseaseSearch search={search} onSearchChange={setSearch} />
 
         <DiseaseTable
           diseases={diseases}
@@ -95,22 +87,13 @@ export default function DiseasesPage() {
           onSortFieldChange={setSortField}
           onSortOrderChange={setSortOrder}
           onEdit={(disease) => {
-            // Pass the disease data to editingDisease state
-            // This will trigger the form to switch to edit mode
             toast.info(`Editing disease: ${disease.code}`)
           }}
           onDelete={handleDeleteClick}
           onImageClick={setSelectedImage}
         />
 
-        <div className="flex justify-end my-4">
-          <button
-            onClick={handleExportPDF}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-          >
-            Export to PDF
-          </button>
-        </div>
+        <ExportButton onExport={handleExportPDF} />
 
         <DeleteConfirmDialog
           isOpen={deleteDialog.isOpen}
