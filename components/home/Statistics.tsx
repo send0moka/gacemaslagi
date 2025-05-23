@@ -88,7 +88,7 @@ export default function Statistics() {
   }
 
   return (
-    <section className="max-w-6xl mx-auto p-8">
+    <section id="statistics" className="max-w-6xl mx-auto p-8">
       <h2 className="text-2xl font-bold mb-8 text-center">Statistik Diagnosis</h2>
 
       <div className="space-y-8">
