@@ -18,7 +18,7 @@ interface DiagnosisCount {
   count: number
 }
 
-export default function Statistics() {
+export default function Histories() {
   const { user } = useUser()
   const [userHistory, setUserHistory] = useState<DiagnosisHistory[]>([])
   const [allDiagnoses, setAllDiagnoses] = useState<DiagnosisCount[]>([])
@@ -84,12 +84,12 @@ export default function Statistics() {
   }, [user])
 
   if (loading) {
-    return <div className="text-center p-8">Loading statistics...</div>
+    return <div className="text-center p-8">Loading histories...</div>
   }
 
   return (
-    <section id="statistics" className="max-w-6xl mx-auto p-8">
-      <h2 className="text-2xl font-bold mb-8 text-center">Statistik Diagnosis</h2>
+    <section id="histories" className="max-w-6xl mx-auto p-8">
+      <h2 className="text-2xl font-bold mb-8 text-center">Histories</h2>
 
       <div className="space-y-8">
         {/* User's History */}
@@ -140,9 +140,6 @@ export default function Statistics() {
         <div className="bg-white p-6 rounded-lg shadow">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-semibold">Statistik Keseluruhan</h3>
-            <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">
-              Total: {allDiagnoses.reduce((sum, d) => sum + d.count, 0)}
-            </span>
           </div>
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">

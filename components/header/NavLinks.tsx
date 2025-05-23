@@ -11,7 +11,7 @@ export const NavLinks = ({
   isMobile,
   onItemClick,
 }: NavLinksProps) => {
-  const navItems = ["Diagnosis", "Statistics", "Resources", "About"]
+  const navItems = ["Diagnosis", "Histories", "Resources", "About"]
 
   return navItems.map((item) => (
     <Link

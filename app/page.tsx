@@ -3,8 +3,9 @@ import { auth, currentUser } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import Hero from "@/components/home/Hero"
 import Diagnosis from "@/components/home/Diagnosis"
-import Statistics from "@/components/home/Statistics"
+import Histories from "@/components/home/Histories"
 import PublicLayout from "@/components/PublicLayout"
+import Numbers from "@/components/home/Numbers"
 
 const SUPER_ADMIN_EMAIL = "jehian.zuhry@mhs.unsoed.ac.id"
 
@@ -24,8 +25,9 @@ export default async function Home() {
   return (
     <PublicLayout>
       <Hero />
+      <Numbers />
       <Diagnosis />
-      <Statistics />
+      <Histories />
     </PublicLayout>
   )
 }
