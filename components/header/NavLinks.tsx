@@ -11,12 +11,12 @@ export const NavLinks = ({
   isMobile,
   onItemClick,
 }: NavLinksProps) => {
-  const navItems = ["Service", "Histories", "Resources", "About"]
+  const navItems = ["Diagnosis", "Statistics", "Resources", "About"]
 
   return navItems.map((item) => (
     <Link
       key={item}
-      href={`/${item.toLowerCase()}`}
+      href={`#${item.toLowerCase()}`}
       className={`
         ${
           isMobile

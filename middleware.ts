@@ -1,7 +1,7 @@
 import { clerkMiddleware } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
 
-const publicRoutes = ["/", "/service", "/histories", "/resources", "/about"]
+const publicRoutes = ["/"]
 const SUPER_ADMIN_EMAIL = "jehian.zuhry@mhs.unsoed.ac.id"
 
 export default clerkMiddleware((auth, request) => {
