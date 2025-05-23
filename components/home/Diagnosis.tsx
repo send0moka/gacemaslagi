@@ -7,8 +7,9 @@ import { useUser } from "@clerk/nextjs"
 import { createClient } from "@/lib/client"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
-import { Symptom } from "@/utils/types"
+import { Symptom, Disease } from "@/utils/types"
 import Image from "next/image"
+import DiagnosisResult from "./DiagnosisResult"
 
 interface DecisionNode {
   id: number
@@ -32,6 +33,7 @@ export default function Diagnosis() {
   const [symptoms, setSymptoms] = useState<Record<string, Symptom>>({})
   const [loading, setLoading] = useState(true)
   const [hasStarted, setHasStarted] = useState(false)  // Add this new state
+  const [diseaseDetail, setDiseaseDetail] = useState<Disease | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -124,6 +126,17 @@ export default function Diagnosis() {
 
         const supabase = createClient()
         
+        // Fetch complete disease information
+        const { data: diseaseData, error: diseaseError } = await supabase
+          .from('diseases')
+          .select('*')
+          .eq('code', nextNode.node_id)
+          .single()
+
+        if (diseaseError) throw diseaseError
+        setDiseaseDetail(diseaseData)
+
+        // Save diagnosis
         const { error } = await supabase
           .from('diagnoses')
           .insert([{
@@ -139,7 +152,7 @@ export default function Diagnosis() {
 
         toast.success("Diagnosis berhasil disimpan")
       } catch (error) {
-        console.error("Error saving diagnosis:", error)
+        console.error("Error:", error)
         toast.error("Gagal menyimpan diagnosis")
       }
     } else if (nextNode) {
@@ -237,16 +250,16 @@ export default function Diagnosis() {
               </Button>
             </div>
           </>
-        ) : (
-          <div className="text-center">
-            <h3 className="text-xl font-semibold mb-4">
-              Hasil Diagnosis: {result}
-            </h3>
-            <Button onClick={resetDiagnosis}>
-              Mulai Diagnosis Baru
-            </Button>
-          </div>
-        )}
+        ) : diseaseDetail ? (
+          <DiagnosisResult
+            disease={diseaseDetail}
+            answeredSymptoms={Object.entries(answers)
+              .filter(([_, value]) => value === true)
+              .map(([code]) => code)}
+            symptoms={symptoms}
+            onReset={resetDiagnosis}
+          />
+        ) : null}
       </div>
     </section>
   )

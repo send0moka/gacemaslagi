@@ -36,7 +36,7 @@ export default function SolutionRenderer({
           </div>
         )}
 
-        <div className="text-gray-800">{parsedSolution.desc}</div>
+        <div className="text-gray-800 text-justify">{parsedSolution.desc}</div>
 
         {parsedSolution.list && (
           <ul className="list-disc pl-4 space-y-1">
