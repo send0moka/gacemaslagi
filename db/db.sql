@@ -58,3 +58,13 @@ create table public.diseases (
     )
   )
 ) TABLESPACE pg_default;
+
+create table public.diagnoses (
+  id uuid not null default extensions.uuid_generate_v4 (),
+  user_id text not null,
+  symptoms text[] not null,
+  disease_code text not null,
+  created_at timestamp with time zone not null default now(),
+  email text null,
+  constraint diagnoses_pkey primary key (id)
+) TABLESPACE pg_default;

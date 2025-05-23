@@ -14,6 +14,8 @@ export interface Disease {
 }
 
 export interface Symptom {
+  description: string
+  image: string
   id: number
   code: string
   name: string
