@@ -253,9 +253,7 @@ export default function Diagnosis() {
         ) : diseaseDetail ? (
           <DiagnosisResult
             disease={diseaseDetail}
-            answeredSymptoms={Object.entries(answers)
-              .filter(([_, value]) => value === true)
-              .map(([code]) => code)}
+            answers={answers}  // Pass the full answers object instead of filtered symptoms
             symptoms={symptoms}
             onReset={resetDiagnosis}
           />
