@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { useState, useEffect } from "react"
@@ -7,101 +9,95 @@ import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { Symptom } from "@/utils/types"
 import Image from "next/image"
-import { PostgrestError } from "@supabase/supabase-js"
 
 interface DecisionNode {
-  code: string
-  yesNext: string | null
-  noNext: string | null
-  result?: string
-}
-
-const decisionTree: Record<string, DecisionNode> = {
-  "start": {
-    code: "start",
-    yesNext: "G01",
-    noNext: null
-  },
-  "G01": {
-    code: "G01",
-    yesNext: "G02",
-    noNext: "G24"
-  },
-  "G02": {
-    code: "G02",
-    yesNext: "result_P01",
-    noNext: "G06"
-  },
-  "G06": {
-    code: "G06",
-    yesNext: "result_P02",
-    noNext: "G10"
-  },
-  "G10": {
-    code: "G10",
-    yesNext: "result_P03",
-    noNext: "G14"
-  },
-  "G14": {
-    code: "G14",
-    yesNext: "result_P04",
-    noNext: "G16"
-  },
-  "G16": {
-    code: "G16",
-    yesNext: "G19",
-    noNext: "result_P07"
-  },
-  "G19": {
-    code: "G19",
-    yesNext: "result_P05",
-    noNext: "result_P06"
-  },
-  "G24": {
-    code: "G24",
-    yesNext: "result_P08",
-    noNext: "result_P09"
+  id: number
+  node_id: string
+  node_type: 'symptom' | 'disease'
+  parent_id: number | null
+  is_yes_path: boolean | null
+  children?: {
+    yes: DecisionNode | null
+    no: DecisionNode | null
   }
 }
 
 export default function Diagnosis() {
   const { user, isSignedIn } = useUser()
-  const [currentQuestion, setCurrentQuestion] = useState<string>("start")
+  const [currentNode, setCurrentNode] = useState<DecisionNode | null>(null)
+  const [decisionTree, setDecisionTree] = useState<DecisionNode | null>(null)
   const [answers, setAnswers] = useState<Record<string, boolean>>({})
   const [isComplete, setIsComplete] = useState(false)
   const [result, setResult] = useState<string>("")
   const [symptoms, setSymptoms] = useState<Record<string, Symptom>>({})
   const [loading, setLoading] = useState(true)
+  const [hasStarted, setHasStarted] = useState(false)  // Add this new state
 
   useEffect(() => {
-    const fetchSymptoms = async () => {
+    const fetchData = async () => {
       try {
         const supabase = createClient()
-        const { data, error } = await supabase
+        
+        // Fetch symptoms
+        const { data: symptomsData, error: symptomsError } = await supabase
           .from('symptoms')
           .select('*')
         
-        if (error) throw error
+        if (symptomsError) throw symptomsError
         
-        const symptomsMap = data.reduce((acc, symptom) => {
+        const symptomsMap = symptomsData.reduce((acc, symptom) => {
           acc[symptom.code] = symptom
           return acc
         }, {} as Record<string, Symptom>)
         
         setSymptoms(symptomsMap)
+
+        // Fetch decision tree
+        const { data: nodesData, error: nodesError } = await supabase
+          .from('decision_nodes')
+          .select('*')
+          .order('created_at', { ascending: true })
+
+        if (nodesError) throw nodesError
+
+        const buildTree = (nodes: any[], currentNodeId: number | null = null): DecisionNode | null => {
+          const currentNode = nodes.find(n => 
+            currentNodeId === null ? n.parent_id === null : n.id === currentNodeId
+          )
+          
+          if (!currentNode) return null
+
+          const yesChild = nodes.find(n => n.parent_id === currentNode.id && n.is_yes_path === true)
+          const noChild = nodes.find(n => n.parent_id === currentNode.id && n.is_yes_path === false)
+
+          return {
+            id: currentNode.id,
+            node_id: currentNode.node_id,
+            node_type: currentNode.node_type,
+            parent_id: currentNode.parent_id,
+            is_yes_path: currentNode.is_yes_path,
+            children: {
+              yes: yesChild ? buildTree(nodes, yesChild.id) : null,
+              no: noChild ? buildTree(nodes, noChild.id) : null
+            }
+          }
+        }
+
+        const tree = buildTree(nodesData)
+        setDecisionTree(tree)
         setLoading(false)
       } catch (error) {
-        toast.error("Gagal memuat data gejala")
+        toast.error("Gagal memuat data")
         console.error(error)
       }
     }
 
-    fetchSymptoms()
+    fetchData()
   }, [])
 
-  const getQuestionText = (code: string) => {
-    if (code === "start") return "Mulai diagnosis?"
-    return symptoms[code]?.name || "Loading..."
+  const getQuestionText = (node: DecisionNode | null) => {
+    if (!node) return "Mulai diagnosis?"
+    return symptoms[node.node_id]?.name || "Loading..."
   }
 
   const handleAnswer = async (answer: boolean) => {
@@ -110,68 +106,57 @@ export default function Diagnosis() {
       return
     }
 
-    const newAnswers = { ...answers, [currentQuestion]: answer }
+    if (!currentNode) return
+
+    const newAnswers = { ...answers, [currentNode.node_id]: answer }
     setAnswers(newAnswers)
 
-    const current = decisionTree[currentQuestion]
-    const nextQuestion = answer ? current.yesNext : current.noNext
+    const nextNode = answer ? currentNode.children?.yes : currentNode.children?.no
 
-    if (nextQuestion?.startsWith("result_")) {
+    if (nextNode?.node_type === 'disease') {
       try {
-        const diseaseCode = nextQuestion.replace("result_", "")
-        setResult(diseaseCode)
+        setResult(nextNode.node_id)
         setIsComplete(true)
 
         const answeredSymptoms = Object.entries(newAnswers)
-          .filter(([code, value]) => code !== 'start' && value === true)
+          .filter(([_, value]) => value === true)
           .map(([code]) => code)
 
         const supabase = createClient()
         
-        console.log('Saving diagnosis with data:', {
-          user_id: user?.id,
-          symptoms: answeredSymptoms,
-          disease_code: diseaseCode
-        })
-
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('diagnoses')
           .insert([{
             user_id: user?.id,
             email: user?.emailAddresses[0]?.emailAddress || null,
             symptoms: answeredSymptoms,
-            disease_code: diseaseCode
+            disease_code: nextNode.node_id
           }])
           .select()
           .single()
 
-        if (error) {
-          console.error('Supabase error details:', error)
-          throw error
-        }
+        if (error) throw error
 
-        console.log('Diagnosis saved successfully:', data)
         toast.success("Diagnosis berhasil disimpan")
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          console.error("Error saving diagnosis:", {
-            message: error.message,
-            details: (error as PostgrestError)?.details,
-            hint: (error as PostgrestError)?.hint
-          })
-          toast.error(`Gagal menyimpan diagnosis: ${error.message}`)
-        } else {
-          console.error("Unknown error:", error)
-          toast.error("Gagal menyimpan diagnosis: Terjadi kesalahan")
-        }
+      } catch (error) {
+        console.error("Error saving diagnosis:", error)
+        toast.error("Gagal menyimpan diagnosis")
       }
-    } else if (nextQuestion) {
-      setCurrentQuestion(nextQuestion)
+    } else if (nextNode) {
+      setCurrentNode(nextNode)
     }
   }
 
+  // Add handleStart function
+  const handleStart = () => {
+    setHasStarted(true)
+    setCurrentNode(decisionTree)
+  }
+
+  // Modify resetDiagnosis to also reset hasStarted
   const resetDiagnosis = () => {
-    setCurrentQuestion("start")
+    setHasStarted(false)
+    setCurrentNode(null)
     setAnswers({})
     setIsComplete(false)
     setResult("")
@@ -201,23 +186,37 @@ export default function Diagnosis() {
       </h2>
 
       <div className="bg-card p-6 rounded-lg shadow-lg">
-        {!isComplete ? (
+        {!hasStarted ? (
+          <div className="text-center">
+            <p className="text-lg mb-6">
+              Selamat datang di sistem diagnosis gangguan kecemasan. 
+              Kami akan membantu Anda mengidentifikasi gejala-gejala yang Anda alami.
+            </p>
+            <Button 
+              onClick={handleStart}
+              variant="default"
+              size="lg"
+            >
+              Mulai Diagnosis
+            </Button>
+          </div>
+        ) : !isComplete ? (
           <>
-            {currentQuestion !== "start" && (
+            {currentNode && currentNode.node_id !== "start" && (
               <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10 mb-2">
-                {currentQuestion}
+                {currentNode.node_id}
               </span>
             )}
-            <p className="text-lg mb-6">{getQuestionText(currentQuestion)}</p>
-            {symptoms[currentQuestion]?.description && (
+            <p className="text-lg mb-6">{getQuestionText(currentNode)}</p>
+            {currentNode && symptoms[currentNode.node_id]?.description && (
               <p className="text-sm text-muted-foreground mb-6">
-                {symptoms[currentQuestion].description}
+                {symptoms[currentNode.node_id].description}
               </p>
             )}
-            {symptoms[currentQuestion]?.image && (
+            {currentNode && symptoms[currentNode.node_id]?.image && (
               <Image 
-                src={symptoms[currentQuestion].image}
-                alt={symptoms[currentQuestion].name}
+                src={symptoms[currentNode.node_id].image}
+                alt={symptoms[currentNode.node_id].name}
                 width={500}
                 height={300}
                 className="w-full max-w-md mx-auto mb-6 rounded-lg"

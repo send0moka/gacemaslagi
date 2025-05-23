@@ -30,3 +30,15 @@ export interface LexicalNode {
     text: string
   }[]
 }
+
+export interface DecisionNode {
+  id: number
+  node_id: string
+  node_type: 'symptom' | 'disease'
+  parent_id: number | null
+  is_yes_path: boolean | null
+  children?: {
+    yes: DecisionNode | null
+    no: DecisionNode | null
+  }
+}

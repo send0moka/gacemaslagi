@@ -19,12 +19,15 @@ const AdminSidebar = ({ isSuperAdmin, isExpert }: AdminSidebarProps) => {
     { href: "/admin/settings", label: "Settings", icon: "⚙️" },
   ]
 
+  // Menu items for expert users
   const expertMenuItems = [
     ...operatorMenuItems,
     { href: "/admin/symptoms", label: "Manage Symptoms", icon: "🔍" },
     { href: "/admin/diseases", label: "Manage Diseases", icon: "🏥" },
+    { href: "/admin/decision-tree", label: "Decision Tree", icon: "🌳" }, // Added decision tree menu
   ]
 
+  // Menu items based on user role
   const menuItems = isSuperAdmin 
     ? [{ href: "/admin/users", label: "Manage Users", icon: "👥" }, ...expertMenuItems]
     : isExpert 
