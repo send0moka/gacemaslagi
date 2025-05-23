@@ -43,7 +43,7 @@ const Hero = () => {
           <RightSection itemCount={itemCount} />
         </div>
 
-        <div className="hidden min-[572px]:block relative z-20 text-3xl min-[662px]:text-4xl min-[846px]:text-5xl min-[1012px]:text-6xl min-[1172px]:text-7xl -left-8">
+        <div className="hidden min-[572px]:block relative z-0 text-3xl min-[662px]:text-4xl min-[846px]:text-5xl min-[1012px]:text-6xl min-[1172px]:text-7xl -left-8">
           <NegativeCorner fill="white" />
           <div className="flex items-end">
             <h1 className="bg-white w-fit px-8 pt-4 min-[662px]:py-4 rounded-tl-[-2rem] rounded-tr-3xl rounded-br-[-2rem]">

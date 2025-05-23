@@ -57,12 +57,12 @@ const LeftSection = () => {
         </div>
       </button>
 
-      <div className="min-[572px]:hidden mt-20 mb-10">
+      <div className="min-[572px]:hidden mt-20 mb-10 z-50">
         <p className="text-sm italic mb-1 ml-4">Diagnose anxiety disorders:</p>
-        <button className="px-6 py-3 bg-blue-600 rounded-full flex items-center gap-2">
+        <a href="#diagnosis" className="px-6 py-3 bg-blue-600 rounded-full flex items-center gap-2">
           <span className="text-white">Get Started</span>
           <ArrowLong fill="white" className="h-fit size-20" />
-        </button>
+        </a>
       </div>
     </div>
   )

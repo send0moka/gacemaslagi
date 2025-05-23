@@ -193,7 +193,7 @@ export default function Diagnosis() {
   }
 
   return (
-    <section className="max-w-2xl mx-auto p-8">
+    <section id="diagnosis" className="max-w-2xl mx-auto p-8 min-h-dvh flex flex-col justify-center">
       <h2 className="text-2xl font-bold mb-8 text-center">
         Diagnosis Gangguan Kecemasan
       </h2>

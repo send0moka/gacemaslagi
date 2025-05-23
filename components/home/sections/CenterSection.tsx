@@ -1,4 +1,5 @@
 import ArrowLong from "@/components/svg/ArrowLong"
+import { motion } from "framer-motion"
 
 const CenterSection = () => {
   return (
@@ -15,12 +16,19 @@ const CenterSection = () => {
         </div>
       </div>
 
-      <div className="absolute -bottom-40 min-[1516px]:-bottom-20 right-0 min-[1516px]:right-1/2 mb-14 min-[662px]:mb-8 min-[846px]:mb-4 min-[1010px]:mb-0">
+      <div className="z-50 absolute -bottom-40 min-[1516px]:-bottom-20 right-0 min-[1516px]:right-1/2 mb-14 min-[662px]:mb-8 min-[846px]:mb-4 min-[1010px]:mb-0">
         <p className="text-sm italic text-center mb-1">Diagnose anxiety disorders:</p>
-        <button className="px-6 py-3 bg-blue-600 rounded-full flex items-center gap-2">
+        <motion.a 
+          href="#diagnosis" 
+          className="px-6 py-3 bg-blue-600 rounded-full flex items-center gap-2"
+          onClick={(e) => {
+            e.preventDefault();
+            document.querySelector('#diagnosis')?.scrollIntoView({ behavior: 'smooth' });
+          }}
+        >
           <span>Get Started</span>
           <ArrowLong fill="white" className="h-fit size-20" />
-        </button>
+        </motion.a>
       </div>
 
       <div className="hidden min-[1172px]:block relative -left-60 min-[1516px]:left-52 min-[1710px]:left-96 top-52 min-[1410px]:top-64">
