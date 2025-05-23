@@ -11,7 +11,6 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  // Early authentication check
   const [session, user] = await Promise.all([auth(), currentUser()])
   
   if (!session.userId || !user) {
@@ -24,18 +23,15 @@ export default async function AdminLayout({
     redirect("/")
   }
 
-  // Check if trying to access users page
   const headersList = headers()
   const pathname = (await headersList).get("x-invoke-path") || ""
   
   if (pathname === "/admin/users") {
-    // Only allow super admin to access users page
     if (userEmail !== SUPER_ADMIN_EMAIL) {
       redirect("/admin")
     }
   }
 
-  // For other pages, check roles
   const isSuperAdmin = userEmail === SUPER_ADMIN_EMAIL
 
   const supabase = createClient()
@@ -47,7 +43,6 @@ export default async function AdminLayout({
 
   const isExpert = userData?.is_expert || false
 
-  // Block non-authorized users
   if (!isSuperAdmin && !userData) {
     redirect("/")
   }

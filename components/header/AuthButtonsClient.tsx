@@ -10,7 +10,6 @@ interface AuthButtonsClientProps {
 }
 
 export const AuthButtonsClient = ({ hasScrolled, isMobile, isAdmin }: AuthButtonsClientProps) => {
-  // Add debug log
   console.log("AuthButtonsClient:", { isAdmin, hasScrolled, isMobile })
 
   const userButtonAppearance = {

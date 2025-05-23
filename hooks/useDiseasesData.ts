@@ -37,7 +37,6 @@ export function useDiseasesData(
   const filterAndSortDiseases = useCallback(() => {
     let filtered = [...diseases]
 
-    // Apply search
     if (search) {
       filtered = filtered.filter(
         (d) =>
@@ -47,7 +46,6 @@ export function useDiseasesData(
       )
     }
 
-    // Apply sort
     filtered.sort((a, b) => {
       const aValue = a[sortField].toLowerCase()
       const bValue = b[sortField].toLowerCase()
@@ -72,7 +70,6 @@ export function useDiseasesData(
   ): Promise<boolean> => {
     setIsLoading(true)
     try {
-      // Validate the data before sending
       if (
         !newDisease.code ||
         !newDisease.name ||
@@ -86,13 +83,11 @@ export function useDiseasesData(
         return false
       }
 
-      // Upload image if exists
       let imageUrl = null
       if (newDisease.solution.image) {
         imageUrl = await uploadImage(newDisease.solution.image)
       }
 
-      // Check for duplicate code
       const { data: existingDisease } = await supabase
         .from("diseases")
         .select("code")
@@ -111,7 +106,7 @@ export function useDiseasesData(
           about: newDisease.about,
           solution: {
             ...newDisease.solution,
-            image: imageUrl, // Use the uploaded image URL
+            image: imageUrl,
           },
           symptoms: newDisease.symptoms,
         },
@@ -138,7 +133,6 @@ export function useDiseasesData(
   ): Promise<boolean> => {
     setIsLoading(true)
     try {
-      // Validate inputs
       if (
         !updatedDisease.code ||
         !updatedDisease.name ||
@@ -150,13 +144,11 @@ export function useDiseasesData(
         return false
       }
 
-      // Upload new image if exists
       let imageUrl = updatedDisease.solution.image
       if (imageUrl && imageUrl.startsWith('data:image')) {
         imageUrl = await uploadImage(imageUrl)
       }
 
-      // Check for duplicate code
       const { data: existingDisease } = await supabase
         .from("diseases")
         .select("id, code")
@@ -175,7 +167,7 @@ export function useDiseasesData(
         about: updatedDisease.about,
         solution: {
           ...updatedDisease.solution,
-          image: imageUrl, // Use the uploaded image URL
+          image: imageUrl,
         },
         symptoms: updatedDisease.symptoms,
       }

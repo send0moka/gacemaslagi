@@ -54,12 +54,10 @@ export default function DiseaseTable({
       symptoms: disease.symptoms,
     })
 
-    // Load existing images
     if (disease.solution.image) {
       const images = disease.solution.image.split("|")
       setImagePreviews(images)
 
-      // Try to extract original filenames if they exist in the image path/name
       const newFileNames = { ...fileNames }
       images.forEach((img) => {
         const fileName = img.split("/").pop()?.split(";")[0]
@@ -72,14 +70,12 @@ export default function DiseaseTable({
       setImagePreviews([])
     }
 
-    // Load existing list items
     if (disease.solution.list) {
       setListItems(disease.solution.list.split("|"))
     } else {
       setListItems([])
     }
 
-    // Load existing links
     if (disease.solution.link) {
       setLinks(disease.solution.link.split("|"))
     } else {

@@ -22,7 +22,6 @@ export default function UsersPage() {
   const router = useRouter()
   const { user } = useUser()
 
-  // Check super admin access on component mount
   useEffect(() => {
     const userEmail = user?.emailAddresses[0]?.emailAddress
     if (userEmail !== SUPER_ADMIN_EMAIL) {
@@ -32,7 +31,7 @@ export default function UsersPage() {
 
   const [users, setUsers] = useState<User[]>([])
   const [newEmail, setNewEmail] = useState("")
-  const [newName, setNewName] = useState("") // Add this line
+  const [newName, setNewName] = useState("")
   const [selectedRole, setSelectedRole] = useState<"operator" | "expert">(
     "operator"
   )
@@ -43,7 +42,6 @@ export default function UsersPage() {
   const [editRole, setEditRole] = useState<"operator" | "expert">("operator")
   const supabase = createClient()
 
-  // Fetch users on component mount
   useEffect(() => {
     fetchUsers()
   }, [])
@@ -77,7 +75,7 @@ export default function UsersPage() {
         .from("users")
         .insert({
           email: newEmail,
-          name: newName || null, // Add this line
+          name: newName || null,
           is_expert: selectedRole === "expert",
         })
         .select("*")
@@ -87,7 +85,7 @@ export default function UsersPage() {
 
       toast.success("User added successfully")
       setNewEmail("")
-      setNewName("") // Add this line
+      setNewName("")
       await fetchUsers()
     } catch (error) {
       if (error instanceof PostgrestError) {
@@ -105,7 +103,6 @@ export default function UsersPage() {
   }
 
   const handleDeleteUser = async (id: string) => {
-    // Add confirmation dialog
     const isConfirmed = window.confirm(
       "Are you sure you want to delete this user?"
     )

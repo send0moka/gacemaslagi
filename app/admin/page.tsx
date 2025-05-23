@@ -24,14 +24,12 @@ export default function AdminDashboard() {
   const fetchStats = async () => {
     const supabase = createClient()
     try {
-      // Get all users
       const { data: users, error } = await supabase
         .from('users')
         .select('*')
 
       if (error) throw error
 
-      // Calculate stats
       const totalUsers = users?.length || 0
       const totalExperts = users?.filter(user => user.is_expert).length || 0
       const totalAdmins = users?.filter(user => !user.is_expert).length || 0

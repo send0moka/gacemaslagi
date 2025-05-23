@@ -7,7 +7,7 @@ interface DiseaseContextType {
   newDisease: {
     code: string
     name: string
-    about: string // Add this line
+    about: string
     solution: {
       desc: string
       image: string | null
@@ -20,7 +20,7 @@ interface DiseaseContextType {
     React.SetStateAction<{
       code: string
       name: string
-      about: string // Add this line
+      about: string
       solution: {
         desc: string
         image: string | null
@@ -44,7 +44,7 @@ interface DiseaseContextType {
 const defaultDiseaseState = {
   code: "",
   name: "",
-  about: "", // Add this line
+  about: "",
   solution: {
     desc: "",
     image: null as string | null,

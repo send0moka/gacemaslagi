@@ -20,11 +20,9 @@ export const exportToPDF = (data: ExportData[], fileName: string) => {
   const headers = Object.keys(data[0])
   const rows = data.map(item => Object.values(item))
 
-  // Add title
   doc.setFontSize(16)
   doc.text(fileName.charAt(0).toUpperCase() + fileName.slice(1), 14, 15)
 
-  // Add table
   autoTable(doc, {
     head: [headers],
     body: rows,
@@ -62,13 +60,11 @@ export const exportDiseaseToPDF = async (
         currentY = 20
       }
 
-      // Disease header
       doc.setFontSize(10)
       doc.setFont(undefined, 'bold')
       doc.text(`${disease.code} - ${disease.name}`, 15, currentY)
       currentY += 10
 
-      // About section
       doc.setFontSize(8)
       doc.setFont(undefined, 'normal')
       doc.text('About:', 15, currentY)
@@ -76,7 +72,6 @@ export const exportDiseaseToPDF = async (
       doc.text(aboutLines, 15, currentY + 5)
       currentY += aboutLines.length * 5 + 10
 
-      // Handle images
       if (disease.solution.image) {
         const images = disease.solution.image.split('|')
         const imagesPerRow = 2
@@ -92,11 +87,9 @@ export const exportDiseaseToPDF = async (
           const xPos = 15 + (i % imagesPerRow) * (imageWidth + 10)
 
           try {
-            // Wait for image to load
             const response = await fetch(images[i])
             const blob = await response.blob()
             
-            // Convert to base64
             const base64 = await new Promise<string>((resolve, reject) => {
               const reader = new FileReader()
               reader.onload = () => resolve(reader.result as string)
@@ -104,7 +97,6 @@ export const exportDiseaseToPDF = async (
               reader.readAsDataURL(blob)
             })
 
-            // Add image to PDF
             await new Promise<void>((resolve, reject) => {
               const img = new Image()
               img.src = base64
@@ -131,7 +123,6 @@ export const exportDiseaseToPDF = async (
         }
       }
 
-      // Solution description
       doc.setFontSize(8)
       doc.setFont(undefined, 'bold')
       doc.text('Solution:', 15, currentY)
@@ -140,7 +131,6 @@ export const exportDiseaseToPDF = async (
       doc.text(descLines, 15, currentY + 5)
       currentY += descLines.length * 5 + 10
 
-      // Add solution steps if present
       if (disease.solution.list) {
         doc.setFont(undefined, 'bold')
         doc.text('Steps:', 15, currentY)
@@ -155,7 +145,6 @@ export const exportDiseaseToPDF = async (
         currentY += 5
       }
 
-      // Add symptoms section
       if (disease.symptoms.length > 0) {
         if (currentY > pageHeight - 40) {
           doc.addPage()
@@ -187,7 +176,6 @@ export const exportDiseaseToPDF = async (
       currentY += 20
     }
 
-    // Generate and download PDF
     const pdfBlob = doc.output('blob')
     const url = window.URL.createObjectURL(pdfBlob)
     const link = document.createElement('a')
@@ -213,7 +201,7 @@ export const parseCSV = async (file: File): Promise<ExportData[]> => {
         const lines = csv.split('\n')
         const headers = lines[0].split(',').map(h => h.trim())
         const data = lines.slice(1)
-          .filter(line => line.trim()) // Remove empty lines
+          .filter(line => line.trim())
           .map(line => {
             const values = line.split(',').map(v => v.trim())
             return headers.reduce((obj, header, i) => {

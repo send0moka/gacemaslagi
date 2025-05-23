@@ -12,23 +12,19 @@ interface AdminSidebarProps {
 const AdminSidebar = ({ isSuperAdmin, isExpert }: AdminSidebarProps) => {
   const pathname = usePathname()
 
-  // Separate home link from admin menu items
   const homeLink = { href: "/", label: "Back to Home", icon: "🏠" }
 
-  // Base menu items for operators (non-experts)
   const operatorMenuItems = [
     { href: "/admin", label: "Dashboard", icon: "📊" },
     { href: "/admin/settings", label: "Settings", icon: "⚙️" },
   ]
 
-  // Add disease and symptom management for experts
   const expertMenuItems = [
     ...operatorMenuItems,
     { href: "/admin/symptoms", label: "Manage Symptoms", icon: "🔍" },
     { href: "/admin/diseases", label: "Manage Diseases", icon: "🏥" },
   ]
 
-  // Add users management only for super admin
   const menuItems = isSuperAdmin 
     ? [{ href: "/admin/users", label: "Manage Users", icon: "👥" }, ...expertMenuItems]
     : isExpert 
@@ -58,7 +54,6 @@ const AdminSidebar = ({ isSuperAdmin, isExpert }: AdminSidebarProps) => {
         />
       </div>
       <nav className="space-y-6">
-        {/* Separate home link with different styling */}
         <a
           href={homeLink.href}
           className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 border border-gray-700"
@@ -67,7 +62,6 @@ const AdminSidebar = ({ isSuperAdmin, isExpert }: AdminSidebarProps) => {
           <span>{homeLink.label}</span>
         </a>
 
-        {/* Menu items */}
         <div className="space-y-2">
           {menuItems.map((item) => (
             <Link

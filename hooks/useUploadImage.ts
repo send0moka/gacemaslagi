@@ -12,16 +12,13 @@ export const useUploadImage = () => {
 
       const supabase = createClient()
       
-      // Generate unique filename
       const timestamp = Date.now()
       const randomString = Math.random().toString(36).substring(7)
       const fileName = `symptom-${timestamp}-${randomString}.jpg`
 
-      // Convert base64 to buffer
       const base64FileData = base64Image.replace(/^data:image\/\w+;base64,/, "")
       const buffer = Buffer.from(base64FileData, "base64")
 
-      // Upload file
       const { error: uploadError } = await supabase.storage
         .from("symptoms-images")
         .upload(fileName, buffer, {
@@ -35,10 +32,9 @@ export const useUploadImage = () => {
         throw uploadError
       }
 
-      // Get signed URL with long expiration
       const { data: signedData } = await supabase.storage
         .from("symptoms-images")
-        .createSignedUrl(fileName, 31536000) // 1 year expiration
+        .createSignedUrl(fileName, 31536000)
 
       if (!signedData?.signedUrl) {
         throw new Error('Failed to generate signed URL')

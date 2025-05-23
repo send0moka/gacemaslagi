@@ -28,7 +28,6 @@ const Hero = () => {
   return (
     <>
       <div className="relative m-2 min-[1172px]:m-8 px-4 min-[572px]:px-8 pt-50 min-[572px]:pt-32 pb-4 min-[572px]:pb-0 rounded-lg min-[1172px]:rounded-3xl overflow-hidden">
-        {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <Image
             src="/hero.png"
@@ -38,7 +37,6 @@ const Hero = () => {
           />
         </div>
 
-        {/* Content Container */}
         <div className="relative z-10 flex justify-between items-center text-white">
           <LeftSection />
           <CenterSection />

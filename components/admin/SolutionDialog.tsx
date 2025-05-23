@@ -13,7 +13,6 @@ export default function SolutionDialog({
   onClose,
   solution
 }: SolutionDialogProps) {
-  // Return null if no solution is provided
   if (!solution) return null
 
   return (
@@ -24,7 +23,6 @@ export default function SolutionDialog({
         </DialogHeader>
         
         <div className="space-y-6">
-          {/* Images */}
           {solution.image && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {solution.image.split("|").map((img, idx) => (
@@ -40,13 +38,11 @@ export default function SolutionDialog({
             </div>
           )}
 
-          {/* Description */}
           <div className="prose prose-sm max-w-none">
             <h3 className="text-lg font-semibold mb-2">Description</h3>
             <p>{solution.desc}</p>
           </div>
 
-          {/* List Items */}
           {solution.list && (
             <div>
               <h3 className="text-lg font-semibold mb-2">Steps</h3>
@@ -58,7 +54,6 @@ export default function SolutionDialog({
             </div>
           )}
 
-          {/* Links */}
           {solution.link && (
             <div>
               <h3 className="text-lg font-semibold mb-2">References</h3>

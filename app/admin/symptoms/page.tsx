@@ -73,7 +73,6 @@ export default function SymptomsPage() {
   const filterAndSortSymptoms = useCallback(() => {
     let filtered = [...symptoms]
     
-    // Apply search
     if (search) {
       filtered = filtered.filter(
         s => s.code.toLowerCase().includes(search.toLowerCase()) ||
@@ -82,7 +81,6 @@ export default function SymptomsPage() {
       )
     }
 
-    // Apply sort
     filtered.sort((a, b) => {
       const aValue = a[sortField].toLowerCase()
       const bValue = b[sortField].toLowerCase()
@@ -177,9 +175,9 @@ export default function SymptomsPage() {
       code: symptom.code,
       name: symptom.name,
       description: symptom.description,
-      image: symptom.image // Make sure image is loaded
+      image: symptom.image
     })
-    setImagePreview(symptom.image) // Set image preview
+    setImagePreview(symptom.image)
   }
 
   const handleUpdateSymptom = async () => {
@@ -270,7 +268,6 @@ export default function SymptomsPage() {
     <div>
       <h1 className="text-2xl font-bold mb-6">Manage Symptoms</h1>
 
-      {/* Add/Edit Form */}
       <div className="bg-white rounded-lg p-4 mb-4">
         <div className="space-y-4">
           <div className="flex gap-4">
@@ -300,7 +297,6 @@ export default function SymptomsPage() {
 
           <div className="space-y-2">
             {imagePreview ? (
-              // Preview image
               <div className="relative w-32 h-32">
                 <Image
                   src={imagePreview}
@@ -366,7 +362,6 @@ export default function SymptomsPage() {
         </div>
       </div>
 
-      {/* Add controls before the table */}
       <div className="bg-white rounded-lg p-4 mb-4 flex flex-wrap gap-4 items-center">
         <div className="flex-1 min-w-[200px]">
           <div className="relative">
@@ -429,7 +424,6 @@ export default function SymptomsPage() {
         </div>
       </div>
 
-      {/* Update table to use filteredSymptoms */}
       <div className="bg-white rounded-lg shadow-md">
         <table className="w-full">
           <thead className="bg-gray-50">

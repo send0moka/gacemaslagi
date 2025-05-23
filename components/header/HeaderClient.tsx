@@ -57,7 +57,6 @@ export function HeaderClient({ isAdmin }: HeaderClientProps) {
             />
           </div>
 
-          {/* Mobile menu button */}
           <button
             className="md:hidden p-2"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -82,7 +81,6 @@ export function HeaderClient({ isAdmin }: HeaderClientProps) {
             </svg>
           </button>
 
-          {/* Mobile menu */}
           {isMobileMenuOpen && (
             <div className="md:hidden fixed inset-0 top-20 bg-white z-40">
               <nav className="flex flex-col p-4">

@@ -10,12 +10,10 @@ export default clerkMiddleware((auth, request) => {
     headers: request.headers.get("x-clerk-user-email")
   })
 
-  // Public routes check
   if (publicRoutes.some(route => request.nextUrl.pathname.startsWith(route))) {
     return NextResponse.next()
   }
 
-  // Admin route check
   if (request.nextUrl.pathname.startsWith("/admin")) {
     const userEmail = request.headers.get("x-clerk-user-email")
     if (!userEmail || userEmail !== SUPER_ADMIN_EMAIL) {

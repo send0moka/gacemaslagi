@@ -173,7 +173,6 @@ export default function DiseaseForm({
         <div>
           <label className="block mb-2">Solution:</label>
           <div className="space-y-4">
-            {/* Description Input */}
             <div>
               <label className="text-sm text-gray-600">
                 Description (Required)
@@ -196,11 +195,9 @@ export default function DiseaseForm({
               />
             </div>
 
-            {/* Image Upload Section */}
             <div>
               <label className="text-sm text-gray-600">Images (Optional)</label>
               <div className="space-y-2">
-                {/* Image preview area */}
                 <div className="flex flex-wrap gap-2">
                   {imagePreviews.map((preview, idx) => (
                     <div key={idx} className="relative group">
@@ -233,7 +230,6 @@ export default function DiseaseForm({
                   ))}
                 </div>
 
-                {/* File input */}
                 <div className="flex items-center justify-center w-full">
                   <label
                     htmlFor="dropzone-file"
@@ -311,7 +307,6 @@ export default function DiseaseForm({
               </div>
             </div>
 
-            {/* List Items Section */}
             <div>
               <label className="text-sm text-gray-600 mb-2 block">
                 List Items (Optional)
@@ -346,7 +341,6 @@ export default function DiseaseForm({
               </div>
             </div>
 
-            {/* Links Section */}
             <div>
               <label className="text-sm text-gray-600 mb-2 block">
                 Links (Optional)
@@ -381,7 +375,6 @@ export default function DiseaseForm({
           </div>
         </div>
 
-        {/* Symptoms Selection */}
         <div>
           <label className="block mb-2 font-medium">Select Symptoms:</label>
           <div className="max-h-60 overflow-y-auto border rounded-lg p-4 space-y-2">
@@ -421,7 +414,6 @@ export default function DiseaseForm({
           </div>
         </div>
 
-        {/* Form Actions */}
         <div className="flex gap-2">
           <button
             onClick={handleSubmit}

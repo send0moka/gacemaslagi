@@ -12,9 +12,8 @@ export default async function Home() {
     currentUser()
   ])
 
-  // Only redirect if accessing /admin directly
   const userEmail = user?.emailAddresses[0]?.emailAddress
-  const isAdminRoute = false // We're in home page, so this is false
+  const isAdminRoute = false
   
   if (isAdminRoute && userEmail === SUPER_ADMIN_EMAIL) {
     redirect("/admin")
