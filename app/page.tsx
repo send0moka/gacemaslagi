@@ -7,6 +7,8 @@ import Histories from "@/components/home/Histories"
 import PublicLayout from "@/components/PublicLayout"
 import Numbers from "@/components/home/Numbers"
 import DecisionTreeSection from "@/components/home/DecisionTreeSection"
+import About from "@/components/home/About"
+import Footer from "@/components/Footer"
 
 const SUPER_ADMIN_EMAIL = "jehian.zuhry@mhs.unsoed.ac.id"
 
@@ -30,6 +32,8 @@ export default async function Home() {
       <Diagnosis />
       <Histories />
       <DecisionTreeSection />
+      <About />
+      <Footer />
     </PublicLayout>
   )
 }
