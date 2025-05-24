@@ -69,6 +69,7 @@ export interface ArticleComment {
   email: string
   content: string
   created_at: string
+  isEditing?: boolean
 }
 
 export interface CommentWithEmail extends ArticleComment {

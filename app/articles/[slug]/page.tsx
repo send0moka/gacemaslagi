@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
 import { useUser } from "@clerk/nextjs"
+import { Pencil } from "lucide-react"
 
 interface ArticleWithAuthor extends Article {
   users: {
@@ -43,11 +44,16 @@ export default function ArticleDetailPage({
   const [selectedComments, setSelectedComments] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isLikeLoading, setIsLikeLoading] = useState(false)
+  const [isExpert, setIsExpert] = useState(false)
+  const [isOperator, setIsOperator] = useState(false)
+  const [editContent, setEditContent] = useState("")
+  const isSuperAdmin = user?.primaryEmailAddress?.emailAddress === "jehian.zuhry@mhs.unsoed.ac.id"
+
   const supabase = createClient()
   const resolvedParams = use(params)
 
   useEffect(() => {
-    async function fetchArticle() {
+    async function fetchArticleAndComments() {
       setIsLoading(true)
       try {
         // Get all articles first
@@ -60,22 +66,31 @@ export default function ArticleDetailPage({
             )
           `)
         
-        // Then find the one matching our slug
+        // Find article matching slug
         const foundArticle = articles?.find(
           article => slugify(article.title) === resolvedParams.slug
         )
 
         if (foundArticle) {
           setArticle(foundArticle as ArticleWithAuthor)
+
+          // Fetch comments for this article
+          const { data: articleComments } = await supabase
+            .from("article_comments")
+            .select("*")
+            .eq("article_id", foundArticle.id)
+            .order("created_at", { ascending: false })
+
+          setComments(articleComments || [])
         }
-      } catch (error: unknown) {
+      } catch (error) {
         console.error("Error fetching article:", error)
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchArticle()
+    fetchArticleAndComments()
   }, [resolvedParams.slug, supabase])
 
   // Fetch likes and comments
@@ -111,6 +126,25 @@ export default function ArticleDetailPage({
 
     fetchLikesAndComments()
   }, [article?.id, user?.primaryEmailAddress?.emailAddress, supabase])
+
+  // Update useEffect to fetch user role
+  useEffect(() => {
+    async function fetchUserRole() {
+      if (!user?.primaryEmailAddress?.emailAddress) return
+      
+      const { data } = await supabase
+        .from('users')
+        .select('is_expert')
+        .eq('email', user.primaryEmailAddress.emailAddress)
+        .single()
+
+      // If data exists and is_expert is false, they are an operator
+      setIsOperator((data && data.is_expert === false) ?? false)
+      setIsExpert(data?.is_expert ?? false)
+    }
+
+    fetchUserRole()
+  }, [user?.primaryEmailAddress?.emailAddress, supabase])
 
   const handleLike = async () => {
     if (!user?.primaryEmailAddress?.emailAddress || !article?.id) {
@@ -180,21 +214,65 @@ export default function ArticleDetailPage({
     }
   }
 
+  // Update handleDeleteComments
   const handleDeleteComments = async () => {
-    if (selectedComments.length === 0) return
+    if (!user?.primaryEmailAddress?.emailAddress || selectedComments.length === 0) return
 
     try {
-      await supabase
+      const { error } = await supabase
         .from("article_comments")
         .delete()
         .in("id", selectedComments)
+
+      if (error) throw error
 
       setComments(prev => prev.filter(comment => !selectedComments.includes(comment.id)))
       setSelectedComments([])
       toast.success("Comments deleted successfully")
     } catch (error) {
+      console.error("Delete error:", error)
       toast.error("Failed to delete comments")
     }
+  }
+
+  const handleEdit = async (commentId: string, newContent: string) => {
+    if (!user?.primaryEmailAddress?.emailAddress) return
+
+    try {
+      const { error } = await supabase
+        .from("article_comments")
+        .update({ content: newContent })
+        .eq("id", commentId)
+        .eq("email", user.primaryEmailAddress.emailAddress)
+
+      if (error) throw error
+
+      setComments(prev => prev.map(comment => 
+        comment.id === commentId 
+          ? { ...comment, content: newContent, isEditing: false }
+          : comment
+      ))
+      toast.success("Comment updated successfully")
+    } catch (error) {
+      console.error("Update error:", error)
+      toast.error("Failed to update comment")
+    }
+  }
+
+  const startEdit = (comment: ArticleComment) => {
+    setComments(prev => prev.map(c => ({
+      ...c,
+      isEditing: c.id === comment.id
+    })))
+    setEditContent(comment.content)
+  }
+
+  const cancelEdit = () => {
+    setComments(prev => prev.map(c => ({
+      ...c,
+      isEditing: false
+    })))
+    setEditContent("")
   }
 
   if (isLoading) {
@@ -313,24 +391,66 @@ export default function ArticleDetailPage({
           
           {comments.map((comment) => (
             <div key={comment.id} className="flex gap-4 p-4 border rounded-lg">
-              <Checkbox
-                checked={selectedComments.includes(comment.id)}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    setSelectedComments(prev => [...prev, comment.id])
-                  } else {
-                    setSelectedComments(prev => prev.filter(id => id !== comment.id))
-                  }
-                }}
-              />
+              {/* Show checkbox if user owns comment OR is operator OR is super admin */}
+              {(comment.email === user?.primaryEmailAddress?.emailAddress || 
+                isOperator || 
+                isSuperAdmin) && (
+                <Checkbox
+                  checked={selectedComments.includes(comment.id)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedComments(prev => [...prev, comment.id])
+                    } else {
+                      setSelectedComments(prev => prev.filter(id => id !== comment.id))
+                    }
+                  }}
+                />
+              )}
               <div className="flex-1">
                 <div className="flex justify-between items-start mb-2">
                   <span className="font-medium">{comment.email}</span>
-                  <time className="text-sm text-gray-500">
-                    {new Date(comment.created_at).toLocaleDateString()}
-                  </time>
+                  <div className="flex items-center gap-2">
+                    {comment.email === user?.primaryEmailAddress?.emailAddress && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => startEdit(comment)}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                    )}
+                    <time className="text-sm text-gray-500">
+                      {new Date(comment.created_at).toLocaleDateString()}
+                    </time>
+                  </div>
                 </div>
-                <p className="text-gray-600">{comment.content}</p>
+                
+                {comment.isEditing ? (
+                  <div className="space-y-2">
+                    <Textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      className="min-h-[100px]"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={cancelEdit}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => handleEdit(comment.id, editContent)}
+                      >
+                        Save
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-600">{comment.content}</p>
+                )}
               </div>
             </div>
           ))}
