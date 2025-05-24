@@ -42,3 +42,12 @@ export interface DecisionNode {
     no: DecisionNode | null
   }
 }
+
+export interface Diagnosis {
+  id: string
+  user_id: string
+  symptoms: string[]
+  disease_code: string
+  created_at: string
+  email: string | null
+}

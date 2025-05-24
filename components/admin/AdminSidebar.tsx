@@ -17,11 +17,12 @@ const AdminSidebar = ({ isSuperAdmin, isExpert }: AdminSidebarProps) => {
   const operatorMenuItems = [
     { href: "/admin", label: "Dashboard", icon: "📊" },
     { href: "/admin/settings", label: "Settings", icon: "⚙️" },
+    { href: "/admin/diagnosis", label: "Diagnosis", icon: "🩺" }, // Added diagnosis menu
   ]
 
   // Menu items for expert users
   const expertMenuItems = [
-    ...operatorMenuItems,
+    ...operatorMenuItems.filter(item => item.href !== "/admin/diagnosis"), // Remove diagnosis from expert menu
     { href: "/admin/symptoms", label: "Manage Symptoms", icon: "🔍" },
     { href: "/admin/diseases", label: "Manage Diseases", icon: "🏥" },
     { href: "/admin/decision-tree", label: "Decision Tree", icon: "🌳" }, // Added decision tree menu
