@@ -6,6 +6,7 @@ import Diagnosis from "@/components/home/Diagnosis"
 import Histories from "@/components/home/Histories"
 import PublicLayout from "@/components/PublicLayout"
 import Numbers from "@/components/home/Numbers"
+import DecisionTreeSection from "@/components/home/DecisionTreeSection"
 
 const SUPER_ADMIN_EMAIL = "jehian.zuhry@mhs.unsoed.ac.id"
 
@@ -28,6 +29,7 @@ export default async function Home() {
       <Numbers />
       <Diagnosis />
       <Histories />
+      <DecisionTreeSection />
     </PublicLayout>
   )
 }
