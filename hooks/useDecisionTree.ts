@@ -86,10 +86,31 @@ export function useDecisionTree() {
     }
   }
 
+  const updateNode = async (id: number, nodeId: string) => {
+    try {
+      setLoading(true)
+      const { error } = await supabase
+        .from('decision_nodes')
+        .update({ node_id: nodeId })
+        .eq('id', id)
+
+      if (error) throw error
+
+      await fetchTree()
+      toast.success('Node updated successfully')
+    } catch (error) {
+      console.error('Error updating node:', error)
+      toast.error('Failed to update node')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return {
     tree,
     loading,
     fetchTree,
-    addNode
+    addNode,
+    updateNode
   }
 }
