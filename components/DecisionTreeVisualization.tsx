@@ -1,6 +1,7 @@
 "use client"
 
 import { DecisionNode } from '@/utils/types'
+import { BadgeCheck } from 'lucide-react' // Add this import
 
 interface TreeVisualizationProps {
   tree: DecisionNode | null
@@ -57,8 +58,16 @@ export default function DecisionTreeVisualization({ tree, loading, readonly = tr
   }
 
   return (
-    <div className="border rounded-lg p-8 bg-gray-50">
+    <div className="border rounded-lg p-8 bg-gray-50 relative">
       <TreeNode node={tree} />
+      
+      {/* Verified Badge */}
+      <div className="absolute bottom-3 right-4 flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full border shadow-sm">
+        <BadgeCheck className="w-4 h-4 text-primary" />
+        <span className="text-sm font-medium text-gray-700">
+          Verified By Experts
+        </span>
+      </div>
     </div>
   )
 }
