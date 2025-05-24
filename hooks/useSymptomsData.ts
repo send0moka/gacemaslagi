@@ -11,7 +11,7 @@ export function useSymptomsData() {
     try {
       const { data, error } = await supabase
         .from("symptoms")
-        .select("id, code, name")
+        .select("id, code, name, description, image")
 
       if (error) {
         console.error("Error fetching symptoms:", error.message)
