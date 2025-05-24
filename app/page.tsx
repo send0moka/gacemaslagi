@@ -9,6 +9,7 @@ import Numbers from "@/components/home/Numbers"
 import DecisionTreeSection from "@/components/home/DecisionTreeSection"
 import About from "@/components/home/About"
 import Footer from "@/components/Footer"
+import Articles from "@/components/home/Articles"
 
 const SUPER_ADMIN_EMAIL = "jehian.zuhry@mhs.unsoed.ac.id"
 
@@ -32,6 +33,7 @@ export default async function Home() {
       <Diagnosis />
       <Histories />
       <DecisionTreeSection />
+      <Articles />
       <About />
       <Footer />
     </PublicLayout>

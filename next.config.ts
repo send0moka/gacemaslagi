@@ -11,6 +11,10 @@ const nextConfig = {
     minimumCacheTTL: 60,
     unoptimized: true
   },
+  webpack: (config: { resolve: { fallback: { fs: boolean } } }) => {
+    config.resolve.fallback = { fs: false }
+    return config
+  }
 }
 
 module.exports = nextConfig

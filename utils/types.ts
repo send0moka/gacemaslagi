@@ -51,3 +51,29 @@ export interface Diagnosis {
   created_at: string
   email: string | null
 }
+
+export interface Article {
+  id: string
+  title: string
+  subtitle: string
+  content: string
+  cover_image: string
+  author_id: string
+  created_at: string
+  likes_count: number
+}
+
+export interface ArticleComment {
+  id: string
+  article_id: string
+  email: string
+  content: string
+  created_at: string
+}
+
+export interface ArticleLike {
+  id: string
+  article_id: string
+  user_id: string
+  created_at: string
+}
