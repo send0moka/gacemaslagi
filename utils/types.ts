@@ -71,9 +71,20 @@ export interface ArticleComment {
   created_at: string
 }
 
+export interface CommentWithEmail extends ArticleComment {
+  isSelected?: boolean
+}
+
 export interface ArticleLike {
   id: string
   article_id: string
   user_id: string
   created_at: string
+}
+
+export interface ArticleWithAuthor extends Article {
+  users: {
+    name: string
+  }
+  likes_count: number
 }
