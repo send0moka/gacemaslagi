@@ -7,6 +7,7 @@ import { createClient } from "@/lib/client"
 import { PostgrestError } from "@supabase/supabase-js"
 import { useRouter } from "next/navigation"
 import { useUser } from "@clerk/nextjs"
+import Image from "next/image"
 
 const SUPER_ADMIN_EMAIL = "jehian.zuhry@mhs.unsoed.ac.id"
 
@@ -16,6 +17,8 @@ interface User {
   name: string | null
   is_expert: boolean
   created_at: string
+  specialization: string | null
+  photo: string | null // Add this line
 }
 
 export default function UsersPage() {
@@ -40,6 +43,10 @@ export default function UsersPage() {
   const [editEmail, setEditEmail] = useState("")
   const [editName, setEditName] = useState("")
   const [editRole, setEditRole] = useState<"operator" | "expert">("operator")
+  const [newSpecialization, setNewSpecialization] = useState("")
+  const [editSpecialization, setEditSpecialization] = useState("")
+  const [newPhoto, setNewPhoto] = useState("")
+  const [editPhoto, setEditPhoto] = useState("")
   const supabase = createClient()
 
   useEffect(() => {
@@ -77,6 +84,8 @@ export default function UsersPage() {
           email: newEmail,
           name: newName || null,
           is_expert: selectedRole === "expert",
+          specialization: newSpecialization || null,
+          photo: newPhoto || null, // Add this line
         })
         .select("*")
         .single()
@@ -86,6 +95,8 @@ export default function UsersPage() {
       toast.success("User added successfully")
       setNewEmail("")
       setNewName("")
+      setNewSpecialization("") // Add this line
+      setNewPhoto("") // Add this line
       await fetchUsers()
     } catch (error) {
       if (error instanceof PostgrestError) {
@@ -129,6 +140,8 @@ export default function UsersPage() {
     setEditEmail(user.email)
     setEditName(user.name || "")
     setEditRole(user.is_expert ? "expert" : "operator")
+    setEditSpecialization(user.specialization || "")
+    setEditPhoto(user.photo || "") // Add this line
   }
 
   const handleUpdate = async () => {
@@ -146,6 +159,8 @@ export default function UsersPage() {
           email: editEmail,
           name: editName || null,
           is_expert: editRole === "expert",
+          specialization: editSpecialization || null,
+          photo: editPhoto || null, // Add this line
         })
         .eq("id", editingUser.id)
 
@@ -167,6 +182,8 @@ export default function UsersPage() {
     setEditEmail("")
     setEditName("")
     setEditRole("operator")
+    setEditSpecialization("")
+    setEditPhoto("") // Add this line
   }
 
   return (
@@ -199,6 +216,28 @@ export default function UsersPage() {
                   : setNewName(e.target.value)
               }
               placeholder="Name (optional)"
+              className="flex-1 px-4 py-2 border rounded-lg"
+            />
+            <input
+              type="text"
+              value={editingUser ? editSpecialization : newSpecialization}
+              onChange={(e) =>
+                editingUser
+                  ? setEditSpecialization(e.target.value)
+                  : setNewSpecialization(e.target.value)
+              }
+              placeholder="Specialization (optional)"
+              className="flex-1 px-4 py-2 border rounded-lg"
+            />
+            <input
+              type="url"
+              value={editingUser ? editPhoto : newPhoto}
+              onChange={(e) =>
+                editingUser
+                  ? setEditPhoto(e.target.value)
+                  : setNewPhoto(e.target.value)
+              }
+              placeholder="Photo URL (optional)"
               className="flex-1 px-4 py-2 border rounded-lg"
             />
           </div>
@@ -290,7 +329,13 @@ export default function UsersPage() {
                 Role
               </th>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                Specialization
+              </th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
                 Created At
+              </th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                Photo
               </th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">
                 Actions
@@ -308,6 +353,9 @@ export default function UsersPage() {
                   {user.is_expert ? "Expert" : "Operator"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
+                  {user.specialization || "-"}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
                   {new Date(user.created_at).toLocaleString("en-GB", {
                     day: "numeric",
                     month: "short",
@@ -316,6 +364,19 @@ export default function UsersPage() {
                     minute: "2-digit",
                     hour12: false,
                   })}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {user.photo ? (
+                    <Image
+                      width={40}
+                      height={40}
+                      src={user.photo}
+                      alt={`${user.name || "User"}'s photo`}
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    "-"
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right">
                   <div className="flex gap-4 justify-end">

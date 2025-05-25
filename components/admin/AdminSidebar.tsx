@@ -14,31 +14,36 @@ const AdminSidebar = ({ isSuperAdmin, isExpert }: AdminSidebarProps) => {
 
   const homeLink = { href: "/", label: "Back to Home", icon: "🏠" }
 
+  // Basic admin menu items
   const operatorMenuItems = [
     { href: "/admin", label: "Dashboard", icon: "📊" },
     { href: "/admin/settings", label: "Settings", icon: "⚙️" },
     { href: "/admin/diagnosis", label: "Diagnosis", icon: "🩺" },
     { href: "/admin/articles", label: "Articles", icon: "📰" },
-    { href: "/admin/feedbacks", label: "Feedbacks", icon: "💬" }, // Added feedbacks menu
+    { href: "/admin/feedbacks", label: "Feedbacks", icon: "💬" },
+    { href: "/admin/consultations", label: "Consultations", icon: "📅" }, // Add this line
   ]
 
-  // Menu items for expert users
-  const expertMenuItems = [
-    ...operatorMenuItems.filter(item => 
-      item.href !== "/admin/diagnosis" && 
-      item.href !== "/admin/articles" &&
-      item.href !== "/admin/feedbacks" // Remove feedbacks from expert menu
-    ),
+  // Expert specific menu items
+  const expertAdditionalItems = [
     { href: "/admin/symptoms", label: "Manage Symptoms", icon: "🔍" },
     { href: "/admin/diseases", label: "Manage Diseases", icon: "🏥" },
     { href: "/admin/decision-tree", label: "Decision Tree", icon: "🌳" },
   ]
 
-  // Menu items based on user role
-  const menuItems = isSuperAdmin 
-    ? [{ href: "/admin/users", label: "Manage Users", icon: "👥" }, ...expertMenuItems]
-    : isExpert 
-      ? expertMenuItems 
+  // Super admin gets access to everything plus user management
+  const menuItems = isSuperAdmin
+    ? [
+        { href: "/admin/users", label: "Manage Users", icon: "👥" },
+        ...operatorMenuItems,
+        ...expertAdditionalItems
+      ]
+    : isExpert
+      ? [...operatorMenuItems.filter(item => 
+          item.href !== "/admin/diagnosis" && 
+          item.href !== "/admin/articles" &&
+          item.href !== "/admin/feedbacks"
+        ), ...expertAdditionalItems]
       : operatorMenuItems
 
   const userButtonAppearance = {
