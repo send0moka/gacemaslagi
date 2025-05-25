@@ -89,3 +89,15 @@ export interface ArticleWithAuthor extends Article {
   }
   likes_count: number
 }
+
+export interface Feedback {
+  id: string
+  created_at: string
+  is_anonymous: boolean
+  name: string | null
+  email: string | null
+  whatsapp: string | null
+  message: string
+  status: 'pending' | 'solved' | 'rejected'
+  user_id: string | null
+}
