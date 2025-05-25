@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client"
 
 import { useEffect, useState } from "react"
@@ -18,12 +19,16 @@ interface DiagnosisCount {
   count: number
 }
 
+type FilterPeriod = 'today' | 'week' | 'month' | 'all'
+
 export default function Histories() {
   const { user } = useUser()
   const [userHistory, setUserHistory] = useState<DiagnosisHistory[]>([])
+  const [filteredHistory, setFilteredHistory] = useState<DiagnosisHistory[]>([])
   const [allDiagnoses, setAllDiagnoses] = useState<DiagnosisCount[]>([])
   const [diseases, setDiseases] = useState<Record<string, Disease>>({})
   const [loading, setLoading] = useState(true)
+  const [activeFilter, setActiveFilter] = useState<FilterPeriod>('all')
 
   useEffect(() => {
     const fetchData = async () => {
@@ -83,6 +88,47 @@ export default function Histories() {
     fetchData()
   }, [user])
 
+  const filterHistory = (period: FilterPeriod) => {
+    setActiveFilter(period)
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+    switch (period) {
+      case 'today':
+        setFilteredHistory(userHistory.filter(diagnosis => {
+          const diagnosisDate = new Date(diagnosis.created_at)
+          return diagnosisDate >= today
+        }))
+        break
+      case 'week':
+        const weekAgo = new Date(today)
+        weekAgo.setDate(weekAgo.getDate() - 7)
+        setFilteredHistory(userHistory.filter(diagnosis => {
+          const diagnosisDate = new Date(diagnosis.created_at)
+          return diagnosisDate >= weekAgo
+        }))
+        break
+      case 'month':
+        const monthAgo = new Date(today)
+        monthAgo.setMonth(monthAgo.getMonth() - 1)
+        setFilteredHistory(userHistory.filter(diagnosis => {
+          const diagnosisDate = new Date(diagnosis.created_at)
+          return diagnosisDate >= monthAgo
+        }))
+        break
+      case 'all':
+      default:
+        setFilteredHistory(userHistory)
+        break
+    }
+  }
+
+  useEffect(() => {
+    if (userHistory.length > 0) {
+      filterHistory('all')
+    }
+  }, [userHistory])
+
   if (loading) {
     return <div className="text-center p-8">Loading histories...</div>
   }
@@ -94,16 +140,63 @@ export default function Histories() {
       <div className="space-y-8">
         {/* User's History */}
         <div className="bg-white p-6 rounded-lg shadow">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-semibold">Riwayat Diagnosis Anda</h3>
-            <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">
-              Total: {userHistory.length}
-            </span>
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-xl font-semibold">Riwayat Diagnosis Anda</h3>
+              <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">
+                Total: {filteredHistory.length}
+              </span>
+            </div>
+            
+            {/* Filter Buttons */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => filterHistory('today')}
+                className={`px-4 py-2 rounded-lg ${
+                  activeFilter === 'today'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                Today
+              </button>
+              <button
+                onClick={() => filterHistory('week')}
+                className={`px-4 py-2 rounded-lg ${
+                  activeFilter === 'week'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                Week
+              </button>
+              <button
+                onClick={() => filterHistory('month')}
+                className={`px-4 py-2 rounded-lg ${
+                  activeFilter === 'month'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                Month
+              </button>
+              <button
+                onClick={() => filterHistory('all')}
+                className={`px-4 py-2 rounded-lg ${
+                  activeFilter === 'all'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+              >
+                All
+              </button>
+            </div>
           </div>
-          {userHistory.length > 0 ? (
-            <div className="max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+
+          {filteredHistory.length > 0 ? (
+            <div className="max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 mt-4">
               <div className="grid gap-3">
-                {userHistory.map((diagnosis) => (
+                {filteredHistory.map((diagnosis) => (
                   <div
                     key={diagnosis.id}
                     className="flex items-center justify-between border rounded-lg p-3 hover:bg-gray-50"
@@ -132,7 +225,7 @@ export default function Histories() {
               </div>
             </div>
           ) : (
-            <p className="text-gray-500">Belum ada riwayat diagnosis</p>
+            <p className="text-gray-500 mt-4">Tidak ada riwayat diagnosis untuk periode ini</p>
           )}
         </div>
 
