@@ -50,15 +50,23 @@ export default function DecisionTreeVisualization({ tree, loading, readonly = tr
   )
 
   if (loading) {
-    return <div>Loading...</div>
+    return (
+      <div className="min-w-[500px] h-[300px] flex items-center justify-center">
+        Loading...
+      </div>
+    )
   }
 
   if (!tree) {
-    return <div>No decision tree data available</div>
+    return (
+      <div className="min-w-[500px] h-[300px] flex items-center justify-center">
+        No decision tree data available
+      </div>
+    )
   }
 
   return (
-    <div className="border rounded-lg p-8 bg-gray-50 relative">
+    <div className="border rounded-lg p-8 bg-gray-50 relative min-w-[500px]">
       <TreeNode node={tree} />
       
       {/* Verified Badge */}

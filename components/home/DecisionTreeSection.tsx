@@ -20,7 +20,12 @@ export default function DecisionTreeSection() {
         <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
           Berikut adalah visualisasi pohon keputusan yang digunakan dalam sistem diagnosis kami
         </p>
-        <DecisionTreeVisualization tree={tree} loading={loading} />
+        {/* Add overflow container */}
+        <div className="overflow-x-auto pb-4">
+          <div className="min-w-max">
+            <DecisionTreeVisualization tree={tree} loading={loading} />
+          </div>
+        </div>
       </div>
     </section>
   )
