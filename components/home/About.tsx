@@ -30,7 +30,7 @@ const teamMembers = [
 
 export default function TeamSection() {
   return (
-    <section className="py-20">
+    <section id="about" className="py-20">
       <div className="container mx-auto px-4">
         <h2 className="text-4xl font-bold text-center text-gray-800 mb-12">
           #PejuangGaCemasLagi
