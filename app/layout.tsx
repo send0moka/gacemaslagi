@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google"
 import { ClerkProvider } from "@clerk/nextjs"
 import "./globals.css"
 import { Toaster } from "@/components/ui/sonner"
+import MobileDetection from "@/components/MobileDetection"
 
 const plusJakarta = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta",
@@ -45,7 +46,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" className={plusJakarta.variable}>
         <body className="font-sans antialiased bg-background text-foreground">
-          {children}
+          <MobileDetection>{children}</MobileDetection>
           <Toaster />
         </body>
       </html>
