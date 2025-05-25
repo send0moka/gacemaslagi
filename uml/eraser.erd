@@ -1,0 +1,118 @@
+// title
+title Health Consultation Platform Data Model
+
+// define tables
+users [icon: user, color: yellow]{
+  id bigint pk
+  created_at timestamp
+  name varchar
+  email varchar
+  is_expert boolean
+  specialization text
+  photo text
+}
+
+articles [icon: file-text, color: blue]{
+  id uuid pk
+  title text
+  subtitle text
+  content text
+  cover_image text
+  created_at timestamp
+  likes_count integer
+  author_id bigint
+}
+
+article_comments [icon: message-circle, color: green]{
+  id uuid pk
+  article_id uuid
+  email text
+  content text
+  created_at timestamp
+}
+
+article_likes [icon: thumbs-up, color: orange]{
+  id uuid pk
+  article_id uuid
+  user_id text
+  created_at timestamp
+}
+
+consultation_requests [icon: calendar, color: purple]{
+  id bigint pk
+  expert_id bigint
+  name varchar
+  email varchar
+  whatsapp varchar
+  consultation_date date
+  consultation_time varchar
+  location varchar
+  status text
+  created_at timestamp
+}
+
+decision_nodes [icon: git-branch, color: teal]{
+  id bigint pk
+  node_id varchar
+  node_type varchar
+  parent_id bigint
+  is_yes_path boolean
+  created_at timestamp
+}
+
+diagnoses [icon: activity, color: red]{
+  id uuid pk
+  user_id text
+  symptoms text[]
+  disease_code text
+  created_at timestamp
+  email text
+}
+
+diseases [icon: alert-triangle, color: pink]{
+  id bigint pk
+  name text
+  symptoms integer[]
+  created_at timestamp
+  code varchar
+  solution jsonb
+  about text
+}
+
+feedbacks [icon: message-square, color: lightblue]{
+  id uuid pk
+  created_at timestamp
+  is_anonymous boolean
+  name text
+  email text
+  whatsapp text
+  message text
+  status text
+  user_id text
+}
+
+settings [icon: settings, color: gray]{
+  id bigint pk
+  data jsonb
+  updated_at timestamp
+}
+
+symptoms [icon: heart, color: red]{
+  id bigint pk
+  name text
+  description text
+  created_at timestamp
+  code varchar
+  image text
+}
+
+// define relationships
+articles.author_id > users.id
+article_comments.article_id > articles.id
+article_likes.article_id > articles.id
+consultation_requests.expert_id > users.id
+decision_nodes.parent_id > decision_nodes.id
+diagnoses.disease_code > diseases.code
+// Note: diagnoses.user_id and feedbacks.user_id are text, not FK to users.id
+// Note: diseases.symptoms is integer[] referencing symptoms.id, but not a direct FK
+// Note: consultation_requests.status and feedbacks.status are enums, not separate tables

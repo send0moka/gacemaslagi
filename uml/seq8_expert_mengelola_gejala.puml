@@ -1,0 +1,45 @@
+@startuml
+actor Expert
+participant ":ClerkAuth" as ClerkAuth
+participant ":NextJSClient" as Client
+participant ":NextJSServer" as Server
+participant ":Supabase" as Supabase
+participant ":SupabaseStorage" as Storage
+participant ":users" as Users
+participant ":symptoms" as Symptoms
+
+' Expert login
+Expert -> ClerkAuth: authenticate(email, password)
+ClerkAuth --> Expert: user_id, email
+note right: Clerk Auth provides user_id and email
+
+' Expert menambah gejala
+Expert -> Client: submit symptom (app/admin/symptoms/page.tsx)
+Client -> Server: POST /api/symptoms (name, description, code, image)
+note right: Via useSymptomsData and useUploadImage hooks
+
+' Server memvalidasi pengguna
+Server -> Supabase: select from users where user_id = :user_id and is_expert = true
+Supabase -> Users: select(id, email, is_expert)
+Users --> Supabase: user_data
+Supabase --> Server: user_data
+alt user not found or not expert
+  Server --> Client: error("Unauthorized")
+  Client --> Expert: show error
+else user authenticated
+  ' Server mengunggah gambar (jika ada)
+  alt image provided
+    Server -> Storage: upload(image)
+    Storage --> Server: image_url
+  end
+
+  ' Server menyimpan gejala
+  Server -> Supabase: insert into symptoms(name, description, code, image)
+  Supabase -> Symptoms: addSymptom(name, code)
+  Symptoms --> Supabase: symptom_id
+  Supabase --> Server: symptom_id
+  Server --> Client: success(symptom_id)
+  Client --> Expert: show symptom confirmation
+end
+
+@enduml

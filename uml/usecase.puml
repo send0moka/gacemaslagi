@@ -1,0 +1,77 @@
+@startuml
+!define RECTANGLE class
+skinparam monochrome true
+
+' Define actors
+actor "Expert" as Expert
+actor "Operator" as Operator
+actor "Super Admin" as SuperAdmin
+actor "Pasien" as Pasien
+
+' Define system boundary
+rectangle "Sistem Pakar" {
+  ' Define use cases
+  usecase "Login" as UC1
+  usecase "Kelola Gejala" as UC2
+  usecase "Kelola Penyakit" as UC3
+  usecase "Kelola Aturan" as UC4
+  usecase "Kelola Konsultasi" as UC5
+  usecase "Input Gejala" as UC6
+  usecase "Lihat Riwayat Diagnosis" as UC7
+  usecase "Lihat Hasil Diagnosis" as UC8
+  usecase "Hitung Forward Chaining" as UC9
+  usecase "Kelola Artikel" as UC10
+  usecase "Kelola Feedback" as UC11
+  usecase "Kelola Diagnosi" as UC12
+  usecase "Berikan Like pada Artikel" as UC13
+  usecase "Tambah Komentar pada Artikel" as UC14
+  usecase "Kelola Pengguna" as UC15
+  usecase "Kelola Pengaturan" as UC16
+}
+
+' Relationships for Expert
+Expert --> UC1
+Expert --> UC2
+Expert --> UC3
+Expert --> UC4
+Expert --> UC5
+Expert --> UC6
+Expert --> UC8
+Expert --> UC9
+
+' Relationships for Operator
+Operator --> UC1
+Operator --> UC10
+Operator --> UC11
+Operator --> UC12
+
+' Relationships for Super Admin
+SuperAdmin --> UC1
+SuperAdmin --> UC2
+SuperAdmin --> UC3
+SuperAdmin --> UC4
+SuperAdmin --> UC5
+SuperAdmin --> UC10
+SuperAdmin --> UC11
+SuperAdmin --> UC12
+SuperAdmin --> UC15
+SuperAdmin --> UC16
+
+' Relationships for Pasien
+Pasien --> UC1
+Pasien --> UC6
+Pasien --> UC7
+Pasien --> UC8
+Pasien --> UC13
+Pasien --> UC14
+
+' Include and Extend relationships
+UC12 ..> UC9 : <<include>>
+UC8 ..> UC9 : <<extend>>
+
+' Notes
+note right of UC9
+  Logika diagnosis menggunakan forward chaining
+end note
+
+@enduml

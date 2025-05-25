@@ -1,0 +1,49 @@
+@startuml
+actor Expert
+participant ":ClerkAuth" as ClerkAuth
+participant ":NextJSClient" as Client
+participant ":NextJSServer" as Server
+participant ":Supabase" as Supabase
+participant ":users" as Users
+participant ":consultation_requests" as Consultations
+participant ":consultation_status" as ConsultationStatus
+
+' Expert login
+Expert -> ClerkAuth: authenticate(email, password)
+ClerkAuth --> Expert: user_id, email
+note right: Clerk Auth provides user_id and email
+
+' Expert mengubah status konsultasi
+Expert -> Client: update consultation status (app/admin/consultations/page.tsx)
+Client -> Server: PATCH /api/consultations (consultation_id, status)
+note right: Via form.tsx
+
+' Server memvalidasi pengguna
+Server -> Supabase: select from users where user_id = :user_id and is_expert = true
+Supabase -> Users: select(id, email, is_expert)
+Users --> Supabase: user_data
+Supabase --> Server: user_data
+alt user not found or not expert
+  Server --> Client: error("Unauthorized")
+  Client --> Expert: show error
+else user authenticated
+  ' Server memvalidasi konsultasi
+  Server -> Supabase: select from consultation_requests where id = :consultation_id and expert_id = :user_id
+  Supabase -> Consultations: select(id, status)
+  Consultations --> Supabase: consultation_data
+  Supabase --> Server: consultation_data
+  alt consultation not found
+    Server --> Client: error("Consultation not found")
+    Client --> Expert: show error
+  else consultation valid
+    ' Server memperbarui status
+    Server -> Supabase: update consultation_requests set status = :status where id = :consultation_id
+    Supabase -> Consultations: updateStatus(consultation_id, status)
+    Consultations --> Supabase: success
+    Supabase --> Server: success
+    Server --> Client: success
+    Client --> Expert: show update confirmation
+  end
+end
+
+@enduml

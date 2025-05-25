@@ -1,0 +1,39 @@
+@startuml
+actor SuperAdmin
+participant ":ClerkAuth" as ClerkAuth
+participant ":NextJSClient" as Client
+participant ":NextJSServer" as Server
+participant ":Supabase" as Supabase
+participant ":users" as Users
+
+' Super Admin login
+SuperAdmin -> ClerkAuth: authenticate(email, password)
+ClerkAuth --> SuperAdmin: user_id, email
+note right: Clerk Auth provides user_id and email
+
+' Super Admin menambah pengguna
+SuperAdmin -> Client: submit user (app/admin/users/page.tsx)
+Client -> Server: POST /api/users (name, email, is_expert, specialization, photo)
+note right: Via form.tsx
+
+' Server memvalidasi super admin
+Server -> Supabase: select from users where user_id = :user_id and email = 'jehian.zuhry@mhs.unsoed.ac.id'
+Supabase -> Users: select(id, email)
+Users --> Supabase: user_data
+Supabase --> Server: user_data
+alt user not found or not super admin
+  Server --> Client: error("Unauthorized")
+  Client --> SuperAdmin: show error
+else user authenticated
+  note right: Policy: Allow all operations for users
+
+  ' Server menyimpan pengguna
+  Server -> Supabase: insert into users(name, email, is_expert, specialization, photo)
+  Supabase -> Users: createUser(name, email)
+  Users --> Supabase: user_id
+  Supabase --> Server: user_id
+  Server --> Client: success(user_id)
+  Client --> SuperAdmin: show user confirmation
+end
+
+@enduml

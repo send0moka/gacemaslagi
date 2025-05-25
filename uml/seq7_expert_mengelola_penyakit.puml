@@ -1,0 +1,45 @@
+@startuml
+actor Expert
+participant ":ClerkAuth" as ClerkAuth
+participant ":NextJSClient" as Client
+participant ":NextJSServer" as Server
+participant ":Supabase" as Supabase
+participant ":SupabaseStorage" as Storage
+participant ":users" as Users
+participant ":diseases" as Diseases
+
+' Expert login
+Expert -> ClerkAuth: authenticate(email, password)
+ClerkAuth --> Expert: user_id, email
+note right: Clerk Auth provides user_id and email
+
+' Expert menambah penyakit
+Expert -> Client: submit disease (DiseaseForm.tsx)
+Client -> Server: POST /api/diseases (name, symptoms, code, solution, about)
+note right: Via useDiseasesData and useUploadDiseaseImage hooks
+
+' Server memvalidasi pengguna
+Server -> Supabase: select from users where user_id = :user_id and is_expert = true
+Supabase -> Users: select(id, email, is_expert)
+Users --> Supabase: user_data
+Supabase --> Server: user_data
+alt user not found or not expert
+  Server --> Client: error("Unauthorized")
+  Client --> Expert: show error
+else user authenticated
+  ' Server mengunggah gambar (jika ada)
+  alt solution.image provided
+    Server -> Storage: upload(solution.image)
+    Storage --> Server: image_url
+  end
+
+  ' Server menyimpan penyakit
+  Server -> Supabase: insert into diseases(name, symptoms, code, solution, about)
+  Supabase -> Diseases: addDisease(name, code)
+  Diseases --> Supabase: disease_id
+  Supabase --> Server: disease_id
+  Server --> Client: success(disease_id)
+  Client --> Expert: show disease confirmation (DiseaseTable.tsx)
+end
+
+@enduml

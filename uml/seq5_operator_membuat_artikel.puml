@@ -1,0 +1,40 @@
+@startuml
+actor Operator
+participant ":ClerkAuth" as ClerkAuth
+participant ":NextJSClient" as Client
+participant ":NextJSServer" as Server
+participant ":Supabase" as Supabase
+participant ":users" as Users
+participant ":articles" as Articles
+
+' Operator login
+Operator -> ClerkAuth: authenticate(email, password)
+ClerkAuth --> Operator: user_id, email
+note right: Clerk Auth provides user_id and email
+
+' Operator membuat artikel
+Operator -> Client: submit article (app/admin/articles/page.tsx)
+Client -> Server: POST /api/articles (title, content, subtitle, cover_image)
+note right: Via form.tsx
+
+' Server memvalidasi pengguna
+Server -> Supabase: select from users where user_id = :user_id
+Supabase -> Users: select(id, email, is_expert)
+Users --> Supabase: user_data
+Supabase --> Server: user_data
+alt user not found or not operator
+  Server --> Client: error("Unauthorized")
+  Client --> Operator: show error
+else user authenticated
+  note right: Policy: Users can insert their own articles
+
+  ' Server menyimpan artikel
+  Server -> Supabase: insert into articles(title, content, subtitle, cover_image, author_id)
+  Supabase -> Articles: createArticle(title, content)
+  Articles --> Supabase: article_id
+  Supabase --> Server: article_id
+  Server --> Client: success(article_id)
+  Client --> Operator: show article confirmation
+end
+
+@enduml

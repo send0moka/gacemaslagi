@@ -1,0 +1,65 @@
+@startuml
+actor Pasien
+participant ":ClerkAuth" as ClerkAuth
+participant ":NextJSClient" as Client
+participant ":NextJSServer" as Server
+participant ":Supabase" as Supabase
+participant ":users" as Users
+participant ":articles" as Articles
+participant ":article_likes" as ArticleLikes
+
+' Pasien login
+Pasien -> ClerkAuth: authenticate(email, password)
+ClerkAuth --> Pasien: user_id, email
+note right: Clerk Auth provides user_id and email
+
+' Pasien memberikan like
+Pasien -> Client: click like button (Articles.tsx)
+Client -> Server: POST /api/articles/[slug]/like (article_id, user_id)
+note right: Via button.tsx in Articles.tsx
+
+' Server memvalidasi pengguna
+Server -> Supabase: select from users where user_id = :user_id
+Supabase -> Users: select(email, user_id)
+Users --> Supabase: user_data
+Supabase --> Server: user_data
+alt user not found
+  Server --> Client: error("User not authenticated")
+  Client --> Pasien: show error
+else user authenticated
+  note right: Policy: manage_likes
+
+  ' Server memvalidasi artikel
+  Server -> Supabase: select from articles where id = :article_id
+  Supabase -> Articles: select(id)
+  Articles --> Supabase: article_data
+  Supabase --> Server: article_data
+  alt article not found
+    Server --> Client: error("Article not found")
+    Client --> Pasien: show error
+  else article valid
+    ' Server memeriksa apakah sudah like
+    Server -> Supabase: select from article_likes where article_id = :article_id and user_id = :user_id
+    Supabase -> ArticleLikes: select(id)
+    ArticleLikes --> Supabase: like_data
+    Supabase --> Server: like_data
+    alt already liked
+      Server --> Client: error("Already liked")
+      Client --> Pasien: show error
+    else not yet liked
+      ' Server menyimpan like
+      Server -> Supabase: insert into article_likes(article_id, user_id)
+      Supabase -> ArticleLikes: likeArticle(article_id, user_id)
+      ArticleLikes --> Supabase: like_id
+      Supabase --> Server: like_id
+      Server -> Supabase: update articles set likes_count = likes_count + 1 where id = :article_id
+      Supabase -> Articles: update(likes_count)
+      Articles --> Supabase: success
+      Supabase --> Server: success
+      Server --> Client: success(like_id)
+      Client --> Pasien: show like confirmation
+    end
+  end
+end
+
+@enduml

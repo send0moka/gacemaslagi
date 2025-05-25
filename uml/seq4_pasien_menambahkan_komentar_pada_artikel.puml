@@ -1,0 +1,51 @@
+@startuml
+actor Pasien
+participant ":ClerkAuth" as ClerkAuth
+participant ":NextJSClient" as Client
+participant ":NextJSServer" as Server
+participant ":Supabase" as Supabase
+participant ":users" as Users
+participant ":articles" as Articles
+participant ":article_comments" as Comments
+
+' Pasien login
+Pasien -> ClerkAuth: authenticate(email, password)
+ClerkAuth --> Pasien: user_id, email
+note right: Clerk Auth provides user_id and email
+
+' Pasien menambahkan komentar
+Pasien -> Client: submit comment (Articles.tsx)
+Client -> Server: POST /api/articles/[slug]/comment (article_id, content)
+note right: Via form.tsx in Articles.tsx
+
+' Server memvalidasi pengguna
+Server -> Supabase: select from users where user_id = :user_id
+Supabase -> Users: select(email, user_id)
+Users --> Supabase: user_data
+Supabase --> Server: user_data
+alt user not found
+  Server --> Client: error("User not authenticated")
+  Client --> Pasien: show error
+else user authenticated
+  note right: Policy: Authenticated users can create comments
+
+  ' Server memvalidasi artikel
+  Server -> Supabase: select from articles where id = :article_id
+  Supabase -> Articles: select(id)
+  Articles --> Supabase: article_data
+  Supabase --> Server: article_data
+  alt article not found
+    Server --> Client: error("Article not found")
+    Client --> Pasien: show error
+  else article valid
+    ' Server menyimpan komentar
+    Server -> Supabase: insert into article_comments(article_id, email, content)
+    Supabase -> Comments: addComment(article_id, content)
+    Comments --> Supabase: comment_id
+    Supabase --> Server: comment_id
+    Server --> Client: success(comment_id)
+    Client --> Pasien: show comment confirmation
+  end
+end
+
+@enduml

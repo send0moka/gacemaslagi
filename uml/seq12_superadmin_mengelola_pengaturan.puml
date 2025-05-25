@@ -1,0 +1,38 @@
+@startuml
+actor SuperAdmin
+participant ":ClerkAuth" as ClerkAuth
+participant ":NextJSClient" as Client
+participant ":NextJSServer" as Server
+participant ":Supabase" as Supabase
+participant ":users" as Users
+participant ":settings" as Settings
+
+' Super Admin login
+SuperAdmin -> ClerkAuth: authenticate(email, password)
+ClerkAuth --> SuperAdmin: user_id, email
+note right: Clerk Auth provides user_id and email
+
+' Super Admin memperbarui pengaturan
+SuperAdmin -> Client: update settings (app/admin/settings/page.tsx)
+Client -> Server: PATCH /api/settings (id, data)
+note right: Via form.tsx
+
+' Server memvalidasi super admin
+Server -> Supabase: select from users where user_id = :user_id and email = 'jehian.zuhry@mhs.unsoed.ac.id'
+Supabase -> Users: select(id, email)
+Users --> Supabase: user_data
+Supabase --> Server: user_data
+alt user not found or not super admin
+  Server --> Client: error("Unauthorized")
+  Client --> SuperAdmin: show error
+else user authenticated
+  ' Server memperbarui pengaturan
+  Server -> Supabase: update settings set data = :data where id = :id
+  Supabase -> Settings: updateSettings(id, data)
+  Settings --> Supabase: success
+  Supabase --> Server: success
+  Server --> Client: success
+  Client --> SuperAdmin: show update confirmation
+end
+
+@enduml

@@ -1,0 +1,50 @@
+@startuml
+actor Expert
+participant ":ClerkAuth" as ClerkAuth
+participant ":NextJSClient" as Client
+participant ":NextJSServer" as Server
+participant ":Supabase" as Supabase
+participant ":users" as Users
+participant ":decision_nodes" as DecisionNodes
+
+' Expert login
+Expert -> ClerkAuth: authenticate(email, password)
+ClerkAuth --> Expert: user_id, email
+note right: Clerk Auth provides user_id and email
+
+' Expert menambah node decision tree
+Expert -> Client: add node (DecisionTreeVisualization.tsx)
+Client -> Server: POST /api/decision-tree (node_id, node_type, parent_id, is_yes_path)
+note right: Via useDecisionTree hook
+
+' Server memvalidasi pengguna
+Server -> Supabase: select from users where user_id = :user_id and is_expert = true
+Supabase -> Users: select(id, email, is_expert)
+Users --> Supabase: user_data
+Supabase --> Server: user_data
+alt user not found or not expert
+  Server --> Client: error("Unauthorized")
+  Client --> Expert: show error
+else user authenticated
+  ' Server memvalidasi parent node (jika ada)
+  alt parent_id provided
+    Server -> Supabase: select from decision_nodes where id = :parent_id
+    Supabase -> DecisionNodes: select(id)
+    DecisionNodes --> Supabase: parent_data
+    Supabase --> Server: parent_data
+    alt parent not found
+      Server --> Client: error("Parent node not found")
+      Client --> Expert: show error
+    end
+  end
+
+  ' Server menyimpan node
+  Server -> Supabase: insert into decision_nodes(node_id, node_type, parent_id, is_yes_path)
+  Supabase -> DecisionNodes: createNode(node_id, node_type)
+  DecisionNodes --> Supabase: node_id
+  Supabase --> Server: node_id
+  Server --> Client: success(node_id)
+  Client --> Expert: show node confirmation
+end
+
+@enduml

@@ -1,0 +1,51 @@
+@startuml
+actor Operator
+participant ":ClerkAuth" as ClerkAuth
+participant ":NextJSClient" as Client
+participant ":NextJSServer" as Server
+participant ":Supabase" as Supabase
+participant ":users" as Users
+participant ":feedbacks" as Feedbacks
+participant ":feedback_status" as FeedbackStatus
+
+' Operator login
+Operator -> ClerkAuth: authenticate(email, password)
+ClerkAuth --> Operator: user_id, email
+note right: Clerk Auth provides user_id and email
+
+' Operator mengubah status feedback
+Operator -> Client: update feedback status (FeedbackTable.tsx)
+Client -> Server: PATCH /api/feedback (feedback_id, status)
+note right: Via FeedbackTable.tsx
+
+' Server memvalidasi pengguna
+Server -> Supabase: select from users where user_id = :user_id
+Supabase -> Users: select(id, email, is_expert)
+Users --> Supabase: user_data
+Supabase --> Server: user_data
+alt user not found or not operator
+  Server --> Client: error("Unauthorized")
+  Client --> Operator: show error
+else user authenticated
+  note right: Policy: allow_updates
+
+  ' Server memvalidasi feedback
+  Server -> Supabase: select from feedbacks where id = :feedback_id
+  Supabase -> Feedbacks: select(id, status)
+  Feedbacks --> Supabase: feedback_data
+  Supabase --> Server: feedback_data
+  alt feedback not found
+    Server --> Client: error("Feedback not found")
+    Client --> Operator: show error
+  else feedback valid
+    ' Server memperbarui status
+    Server -> Supabase: update feedbacks set status = :status where id = :feedback_id
+    Supabase -> Feedbacks: updateFeedbackStatus(feedback_id, status)
+    Feedbacks --> Supabase: success
+    Supabase --> Server: success
+    Server --> Client: success
+    Client --> Operator: show update confirmation
+  end
+end
+
+@enduml

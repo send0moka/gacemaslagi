@@ -1,0 +1,63 @@
+@startuml
+actor Pasien
+participant ":ClerkAuth" as ClerkAuth
+participant ":NextJSClient" as Client
+participant ":NextJSServer" as Server
+participant ":Supabase" as Supabase
+participant ":users" as Users
+participant ":symptoms" as Symptoms
+participant ":decision_nodes" as DecisionNodes
+participant ":diseases" as Diseases
+participant ":diagnoses" as Diagnoses
+
+' Pasien login
+Pasien -> ClerkAuth: authenticate(email, password)
+ClerkAuth --> Pasien: user_id, email
+note right: Clerk Auth provides user_id and email
+
+' Pasien mengakses halaman diagnosis
+Pasien -> Client: access /home (Diagnosis.tsx)
+Client -> Server: POST /api/diagnosis (symptoms: text[])
+note right: Via useSymptomsData and useDecisionTree hooks
+
+' Server memvalidasi pengguna
+Server -> Supabase: select from users where user_id = :user_id
+Supabase -> Users: select(email, user_id)
+Users --> Supabase: user_data
+Supabase --> Server: user_data
+alt user not found
+  Server --> Client: error("User not authenticated")
+  Client --> Pasien: show error
+else user authenticated
+  note right: Policy: Users can insert their own diagnoses
+
+  ' Server mengambil gejala
+  Server -> Supabase: select from symptoms where code in (:symptoms)
+  Supabase -> Symptoms: select(id, code, name)
+  Symptoms --> Supabase: symptoms_data
+  Supabase --> Server: symptoms_data
+  alt symptoms invalid
+    Server --> Client: error("Invalid symptoms")
+    Client --> Pasien: show error
+  else symptoms valid
+    ' Server menggunakan decision tree untuk mencocokkan penyakit
+    Server -> Supabase: select from decision_nodes
+    Supabase -> DecisionNodes: traverse(node_id, is_yes_path)
+    DecisionNodes --> Supabase: node_data
+    Supabase --> Server: node_data
+    Server -> Supabase: select from diseases where symptoms @> :symptoms
+    Supabase -> Diseases: select(code, name)
+    Diseases --> Supabase: disease_data
+    Supabase --> Server: disease_code
+
+    ' Server menyimpan diagnosis
+    Server -> Supabase: insert into diagnoses(user_id, symptoms, disease_code, email)
+    Supabase -> Diagnoses: createDiagnosis(user_id, symptoms, disease_code)
+    Diagnoses --> Supabase: diagnosis_id
+    Supabase --> Server: diagnosis_id
+    Server --> Client: success(diagnosis_id)
+    Client --> Pasien: show diagnosis result (DiagnosisResult.tsx)
+  end
+end
+
+@enduml

@@ -1,0 +1,40 @@
+@startuml
+actor Pasien
+participant ":ClerkAuth" as ClerkAuth
+participant ":NextJSClient" as Client
+participant ":NextJSServer" as Server
+participant ":Supabase" as Supabase
+participant ":users" as Users
+participant ":diagnoses" as Diagnoses
+
+' Pasien login
+Pasien -> ClerkAuth: authenticate(email, password)
+ClerkAuth --> Pasien: user_id, email
+note right: Clerk Auth provides user_id and email
+
+' Pasien mengakses riwayat diagnosis
+Pasien -> Client: access /home (Histories.tsx)
+Client -> Server: GET /api/diagnoses?user_id=:user_id
+note right: Via useDiseasesData hook
+
+' Server memvalidasi pengguna
+Server -> Supabase: select from users where user_id = :user_id
+Supabase -> Users: select(email, user_id)
+Users --> Supabase: user_data
+Supabase --> Server: user_data
+alt user not found
+  Server --> Client: error("User not authenticated")
+  Client --> Pasien: show error
+else user authenticated
+  note right: Policy: Users can view their own diagnoses
+
+  ' Server mengambil riwayat diagnosis
+  Server -> Supabase: select from diagnoses where user_id = :user_id
+  Supabase -> Diagnoses: getDiagnosis(user_id)
+  Diagnoses --> Supabase: diagnoses_data
+  Supabase --> Server: diagnoses_data
+  Server --> Client: success(diagnoses_data)
+  Client --> Pasien: show diagnoses list (Histories.tsx)
+end
+
+@enduml
