@@ -84,18 +84,18 @@ export default function Feedback() {
   }
 
   return (
-    <section className="bg-gray-50 py-24" id="feedback">
-      <div className="container">
+    <section className="min-h-[calc(100vh-64px)] flex items-center justify-center" id="feedback">
+      <div className="container py-12">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Send us your feedback
           </h2>
-          <p className="mt-2 text-lg leading-8 text-gray-600">
+          <p className="mt-2 mb-10 text-lg leading-8 text-gray-600">
             Help us improve our service by sharing your thoughts
           </p>
         </div>
 
-        <div className="mx-auto mt-16 max-w-xl">
+        <div className="mx-auto mt-12 max-w-xl">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField

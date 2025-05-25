@@ -11,6 +11,7 @@ import About from "@/components/home/About"
 import Footer from "@/components/Footer"
 import Articles from "@/components/home/Articles"
 import Feedback from "@/components/home/Feedback"
+import Experts from "@/components/home/Experts"
 
 const SUPER_ADMIN_EMAIL = "jehian.zuhry@mhs.unsoed.ac.id"
 
@@ -34,6 +35,7 @@ export default async function Home() {
       <Diagnosis />
       <Histories />
       <DecisionTreeSection />
+      <Experts />
       <Articles />
       <About />
       <Feedback />
