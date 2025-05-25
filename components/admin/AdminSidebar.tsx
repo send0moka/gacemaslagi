@@ -26,15 +26,15 @@ const AdminSidebar = ({ isSuperAdmin, isExpert }: AdminSidebarProps) => {
 
   // Expert specific menu items
   const expertAdditionalItems = [
-    { href: "/admin/symptoms", label: "Manage Symptoms", icon: "🔍" },
-    { href: "/admin/diseases", label: "Manage Diseases", icon: "🏥" },
+    { href: "/admin/symptoms", label: "Symptoms", icon: "🔍" },
+    { href: "/admin/diseases", label: "Diseases", icon: "🏥" },
     { href: "/admin/decision-tree", label: "Decision Tree", icon: "🌳" },
   ]
 
   // Super admin gets access to everything plus user management
   const menuItems = isSuperAdmin
     ? [
-        { href: "/admin/users", label: "Manage Users", icon: "👥" },
+        { href: "/admin/users", label: "Users", icon: "👥" },
         ...operatorMenuItems,
         ...expertAdditionalItems
       ]
