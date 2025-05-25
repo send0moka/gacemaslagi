@@ -12,39 +12,63 @@ interface AdminSidebarProps {
 const AdminSidebar = ({ isSuperAdmin, isExpert }: AdminSidebarProps) => {
   const pathname = usePathname()
 
-  const homeLink = { href: "/", label: "Back to Home", icon: "🏠" }
-
-  // Basic admin menu items
-  const operatorMenuItems = [
+  // Common items (available to all)
+  const commonItems = [
     { href: "/admin", label: "Dashboard", icon: "📊" },
-    { href: "/admin/settings", label: "Settings", icon: "⚙️" },
-    { href: "/admin/diagnosis", label: "Diagnosis", icon: "🩺" },
-    { href: "/admin/articles", label: "Articles", icon: "📰" },
-    { href: "/admin/feedbacks", label: "Feedbacks", icon: "💬" },
-    { href: "/admin/consultations", label: "Consultations", icon: "📅" }, // Add this line
   ]
 
-  // Expert specific menu items
-  const expertAdditionalItems = [
+  // Super admin specific items
+  const superAdminItems = [
+    { href: "/admin/users", label: "Users", icon: "👥" },
+  ]
+
+  // Operator specific items
+  const operatorItems = [
+    { href: "/admin/articles", label: "Articles", icon: "📰" },
+    { href: "/admin/feedbacks", label: "Feedbacks", icon: "💬" },
+    { href: "/admin/diagnosis", label: "Diagnosis", icon: "🩺" }, // Moved to operator items
+  ]
+
+  // Expert specific items
+  const expertItems = [
+    { href: "/admin/consultations", label: "Consultations", icon: "📅" },
     { href: "/admin/symptoms", label: "Symptoms", icon: "🔍" },
     { href: "/admin/diseases", label: "Diseases", icon: "🏥" },
     { href: "/admin/decision-tree", label: "Decision Tree", icon: "🌳" },
   ]
 
-  // Super admin gets access to everything plus user management
-  const menuItems = isSuperAdmin
-    ? [
-        { href: "/admin/users", label: "Users", icon: "👥" },
-        ...operatorMenuItems,
-        ...expertAdditionalItems
+  // Settings (available to all)
+  const settingsItem = { href: "/admin/settings", label: "Settings", icon: "⚙️" }
+
+  // Home link
+  const homeLink = { href: "/", label: "Back to Home", icon: "🏠" }
+
+  // Determine which items to show based on role
+  const getMenuGroups = () => {
+    if (isSuperAdmin) {
+      return [
+        { title: "Navigation", items: commonItems },
+        { title: "Super Admin", items: superAdminItems },
+        { title: "Content Management", items: operatorItems },
+        { title: "Expert Tools", items: expertItems },
+        { title: "System", items: [settingsItem] }
       ]
-    : isExpert
-      ? [...operatorMenuItems.filter(item => 
-          item.href !== "/admin/diagnosis" && 
-          item.href !== "/admin/articles" &&
-          item.href !== "/admin/feedbacks"
-        ), ...expertAdditionalItems]
-      : operatorMenuItems
+    }
+    
+    if (isExpert) {
+      return [
+        { title: "Navigation", items: commonItems },
+        { title: "Expert Tools", items: expertItems },
+        { title: "System", items: [settingsItem] }
+      ]
+    }
+    
+    return [
+      { title: "Navigation", items: commonItems },
+      { title: "Content Management", items: operatorItems },
+      { title: "System", items: [settingsItem] }
+    ]
+  }
 
   const userButtonAppearance = {
     elements: {
@@ -68,7 +92,8 @@ const AdminSidebar = ({ isSuperAdmin, isExpert }: AdminSidebarProps) => {
           appearance={userButtonAppearance}
         />
       </div>
-      <nav className="space-y-6">
+      
+      <nav className="space-y-4">
         <a
           href={homeLink.href}
           className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 border border-gray-700"
@@ -77,20 +102,27 @@ const AdminSidebar = ({ isSuperAdmin, isExpert }: AdminSidebarProps) => {
           <span>{homeLink.label}</span>
         </a>
 
-        <div className="space-y-2">
-          {menuItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg ${
-                pathname === item.href ? "bg-gray-700" : "hover:bg-gray-800"
-              }`}
-            >
-              <span>{item.icon}</span>
-              <span>{item.label}</span>
-            </Link>
-          ))}
-        </div>
+        {getMenuGroups().map((group, index) => (
+          <div key={index} className="space-y-2">
+            <h2 className="text-xs uppercase tracking-wider text-gray-400 px-4">
+              {group.title}
+            </h2>
+            {group.items.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg ${
+                  pathname === item.href 
+                    ? "bg-gray-700 text-white" 
+                    : "text-gray-300 hover:bg-gray-800"
+                }`}
+              >
+                <span>{item.icon}</span>
+                <span>{item.label}</span>
+              </Link>
+            ))}
+          </div>
+        ))}
       </nav>
     </aside>
   )
