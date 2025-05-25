@@ -32,16 +32,16 @@ export default function Histories() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!user) return
+      if (!user?.emailAddresses?.[0]?.emailAddress) return
       
       try {
         const supabase = createClient()
         
-        // Fetch user's diagnosis history
+        // Fetch user's diagnosis history using email
         const { data: historyData, error: historyError } = await supabase
           .from("diagnoses")
           .select("*")
-          .eq("user_id", user.id)
+          .eq("email", user.emailAddresses[0].emailAddress)
           .order("created_at", { ascending: false })
         
         if (historyError) throw historyError
