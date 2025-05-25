@@ -12,7 +12,7 @@ export default function MobileDetection({ children }: MobileDetectionProps) {
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024) // Consider < 1024px as mobile
+      setIsMobile(window.innerWidth < 768) // Adjust the width as needed for mobile detection
     }
 
     checkMobile()
