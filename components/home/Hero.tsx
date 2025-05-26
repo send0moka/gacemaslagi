@@ -30,7 +30,7 @@ const Hero = () => {
       <div className="relative m-2 min-[1172px]:m-8 px-4 min-[572px]:px-8 pt-50 min-[572px]:pt-32 pb-4 min-[572px]:pb-0 rounded-lg min-[1172px]:rounded-3xl overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image
-            src="/hero.png"
+            src="/hero.webp"
             alt="Hero Background"
             fill
             className="hidden sm:block object-cover transform scale-x-[-1]"
