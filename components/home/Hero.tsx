@@ -33,6 +33,10 @@ const Hero = () => {
             src="/hero.webp"
             alt="Hero Background"
             fill
+            priority
+            loading="eager"
+            sizes="(max-width: 1880px) 100vw, 1880px" // Add responsive sizes
+            quality={85} // Optimize quality
             className="hidden sm:block object-cover transform scale-x-[-1]"
           />
         </div>
