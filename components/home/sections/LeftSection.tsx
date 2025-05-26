@@ -42,10 +42,12 @@ const LeftSection = () => {
                   className="w-10 h-10 rounded-full border-2 border-white overflow-hidden"
                 >
                   <Image
-                    src={`/avatars/avatar-${i}.png`}
+                    src={`/avatars/avatar-${i}.webp`} // Convert to WebP
                     alt={`Avatar ${i}`}
                     width={40}
                     height={40}
+                    quality={70}
+                    loading="lazy"
                   />
                 </div>
               ))}

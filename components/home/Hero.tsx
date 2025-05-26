@@ -35,9 +35,11 @@ const Hero = () => {
             fill
             priority
             loading="eager"
-            sizes="(max-width: 1880px) 100vw, 1880px" // Add responsive sizes
-            quality={85} // Optimize quality
+            sizes="(max-width: 768px) 100vw, (max-width: 1172px) 90vw, 1880px"
+            quality={75} // Reduced from 85
             className="hidden sm:block object-cover transform scale-x-[-1]"
+            placeholder="blur"
+            blurDataURL="data:image/webp;base64,..." // Add blur placeholder
           />
         </div>
 

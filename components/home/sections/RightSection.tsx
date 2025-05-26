@@ -11,10 +11,16 @@ const RightSection = ({ itemCount }: RightSectionProps) => {
       <div className="max-w-md min-[1728px]:-translate-y-6">
         <div className="overflow-hidden mb-4">
           <Image
-            src="/discuss.jpg"
+            src="/discuss.webp"
             alt="Welcome"
             width={400}
             height={300}
+            priority
+            loading="eager"
+            sizes="(max-width: 768px) 100vw, (max-width: 1172px) 90vw, 1880px"
+            quality={75} // Reduced from 85
+            placeholder="blur"
+            blurDataURL="data:image/webp;base64,..." // Add blur placeholder
             className="object-cover rounded-xl w-72 min-[1746px]:w-80 min-[1880px]:w-[25rem]"
           />
         </div>

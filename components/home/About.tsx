@@ -4,27 +4,32 @@ const teamMembers = [
   {
     name: "Jehian Athaya Tsani Az Zuhry",
     nim: "H1D022006",
-    image: "/team/jehian.png",
+    image: "/team/jehian.webp", // Convert to WebP
+    blurDataUrl: "data:image/webp;base64,...", // Add blur data
   },
   {
     name: "Dzakwan Irfan Ramdhani",
     nim: "H1D022043",
-    image: "/team/dzakwan.png",
+    image: "/team/dzakwan.webp", // Convert to WebP
+    blurDataUrl: "data:image/webp;base64,...", // Add blur data
   },
   {
     name: "Amarramitha Poodja Thantawi",
     nim: "H1D022064",
-    image: "/team/amarra.png",
+    image: "/team/amarra.webp", // Convert to WebP
+    blurDataUrl: "data:image/webp;base64,...", // Add blur data
   },
   {
     name: "Hamas Izzuddin Fathi",
     nim: "H1D022097",
-    image: "/team/hamas.png",
+    image: "/team/hamas.webp", // Convert to WebP
+    blurDataUrl: "data:image/webp;base64,...", // Add blur data
   },
   {
     name: "Eka Bintang Wicaksono",
     nim: "H1D023054",
-    image: "/team/eka.png",
+    image: "/team/eka.webp", // Convert to WebP
+    blurDataUrl: "data:image/webp;base64,...", // Add blur data
   },
 ]
 
@@ -48,6 +53,10 @@ export default function TeamSection() {
                   alt={member.name}
                   fill
                   className="object-cover rounded-xl"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  quality={70}
+                  placeholder="blur"
+                  blurDataURL={member.blurDataUrl}
                 />
               </div>
               <h3 className="text-xl font-semibold text-gray-800 mb-1">
